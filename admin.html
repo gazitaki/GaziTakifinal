@@ -33,12 +33,14 @@ button{ cursor:pointer; font-weight:bold; }
 .filterLabel{ font-size:9px; color:#888; margin-top:2px; display:block; }
 
 #products{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
-.productImage{ width:100%; height:130px; object-fit:cover; border-radius:10px; background:#333; }
+.productImage{ width:100%; height:130px; object-fit:cover; border-radius:10px; background:#333; cursor:pointer; transition:opacity .2s; }
+.productImage:active{ opacity:.7; }
 .productImage.pasif-img { opacity: 0.4; filter: grayscale(100%); }
 .badge{ background:#0984e3; padding:3px 7px; border-radius:6px; font-size:11px; display:inline-block; margin-top:4px; }
 
 .orderItem{ display:flex; gap:10px; align-items:center; background:#1a1a1a; padding:8px; border-radius:10px; margin-top:6px; }
-.orderItem img{ width:60px; height:60px; object-fit:cover; border-radius:8px; background:#333; }
+.orderItem img{ width:60px; height:60px; object-fit:cover; border-radius:8px; background:#333; cursor:pointer; flex-shrink:0; }
+.orderItem img:active{ opacity:.7; }
 
 .statusTag{ padding:4px 8px; border-radius:6px; font-size:11px; display:inline-block; margin-top:5px; font-weight:bold; }
 .tag-yeni{ background:#e17055; }
@@ -62,9 +64,49 @@ button{ cursor:pointer; font-weight:bold; }
 
 #loginPage { max-width:400px; margin:60px auto; padding:20px; }
 #adminContent { display:none; }
+
+/* ZOOM MODAL */
+.zoomModal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.95);
+  z-index:999;
+  justify-content:center;
+  align-items:center;
+}
+.zoomModal.show{ display:flex; }
+.zoomModal img{
+  max-width:95vw;
+  max-height:95vh;
+  object-fit:contain;
+  border-radius:10px;
+}
+.zoomClose{
+  position:absolute;
+  top:14px; right:14px;
+  width:38px; height:38px;
+  background:white;
+  color:#111;
+  border:none;
+  border-radius:50%;
+  font-size:22px;
+  font-weight:900;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
 </style>
 </head>
 <body>
+
+<!-- ZOOM MODAL -->
+<div class="zoomModal" id="zoomModal" onclick="closeZoom()">
+  <button class="zoomClose" onclick="closeZoom()">×</button>
+  <img id="zoomImg" onclick="event.stopPropagation()">
+</div>
 
 <div id="loginPage" class="card">
   <h2 style="text-align:center; color:#00b894; margin-top:0;">🔐 Gazi Takı Giriş</h2>
@@ -106,7 +148,7 @@ button{ cursor:pointer; font-weight:bold; }
   <div class="bolumBaslik" style="border-left-color:#0984e3" onclick="goBolum('odeme')">🟡 Ödeme Bekleyen <span class="countBadge" id="count-odeme">0</span></div>
   <div class="bolumIcerik" id="body-odeme"></div>
 
-  <div class="bolumBaslik" style="border-left-color:#6c5ce7" onclick="goBolum('kargo')">Purple Kargoda <span class="countBadge" id="count-kargo">0</span></div>
+  <div class="bolumBaslik" style="border-left-color:#6c5ce7" onclick="goBolum('kargo')">🟣 Kargoda <span class="countBadge" id="count-kargo">0</span></div>
   <div class="bolumIcerik" id="body-kargo"></div>
 
   <div class="bolumBaslik" style="border-left-color:#d63031" onclick="goBolum('iptal')">❌ İptal Edilenler <span class="countBadge" id="count-iptal">0</span></div>
@@ -147,7 +189,6 @@ const firebaseConfig = {
   measurementId: "G-CR0SXQPZTJ"
 };
 
-// Firebase Başlat
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -156,7 +197,6 @@ let products = [];
 let allOrders = [];
 let activeFilter = "hafta";
 
-// Oturum Durumu Kontrolü
 auth.onAuthStateChanged(user => {
   if (user) {
     document.getElementById("loginPage").style.display = "none";
@@ -187,14 +227,23 @@ function startRealtimeListeners() {
     products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     render();
   });
-
   db.collection("orders").orderBy("date", "desc").onSnapshot(snapshot => {
     allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     render();
   });
 }
 
-// Tarih Filtreleme Fonksiyonu
+// ZOOM
+function openZoom(src) {
+  document.getElementById("zoomImg").src = src;
+  document.getElementById("zoomModal").classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+function closeZoom() {
+  document.getElementById("zoomModal").classList.remove("show");
+  document.body.style.overflow = "";
+}
+
 function getRange(filter){
   const now = new Date();
   if(filter === "hafta"){
@@ -258,7 +307,6 @@ function waLink(telefon, mesaj){
   return "https://wa.me/" + full + "?text=" + encodeURIComponent(mesaj);
 }
 
-// Firestore Eylemleri
 async function addProduct(){
   if(!ad.value || !fiyat.value) return alert("Ad ve Fiyat giriniz!");
   await db.collection("products").add({
@@ -319,8 +367,9 @@ function buildCard(order){
     <hr>`;
 
   order.items?.forEach(it => {
+    const resimSrc = it.resim || 'https://via.placeholder.com/60';
     html += `<div class="orderItem">
-      <img src="${it.resim || 'https://via.placeholder.com/60'}">
+      <img src="${resimSrc}" onclick="openZoom('${resimSrc}')">
       <div><b>${it.ad}</b><br>${it.qty} adet x ${it.fiyat}₺</div>
     </div>`;
   });
@@ -355,12 +404,12 @@ function render(){
   const searchKey = document.getElementById("searchOrder").value.toLowerCase();
   const filterBySearch = list => list.filter(o => (o.customer?.isim||"").toLowerCase().includes(searchKey) || (o.customer?.telefon||"").toLowerCase().includes(searchKey));
 
-  // Ürünleri Çiz
   let p = "";
   products.forEach(x => {
     const isAktif = x.aktif !== false;
+    const resimSrc = x.resim || 'https://via.placeholder.com/150';
     p += `<div class="card" style="padding:8px;">
-      <img class="productImage ${isAktif ? '' : 'pasif-img'}" src="${x.resim || 'https://via.placeholder.com/150'}">
+      <img class="productImage ${isAktif ? '' : 'pasif-img'}" src="${resimSrc}" onclick="openZoom('${resimSrc}')">
       <div style="margin-top:5px; font-weight:bold; font-size:12px;">${x.ad}</div>
       <div style="color:#00d084; font-weight:bold;">${x.fiyat}₺</div>
       <button class="${isAktif ? 'primary' : 'passiveBtn'}" onclick="toggleProductStatus('${x.id}', ${isAktif})">${isAktif ? '🟢 Aktif' : '🔴 Pasif'}</button>
@@ -369,7 +418,6 @@ function render(){
   });
   document.getElementById("products").innerHTML = p;
 
-  // Siparişleri Çiz
   const yeni = filterBySearch(allOrders.filter(o => (o.status || "yeni") === "yeni"));
   const odeme = filterBySearch(allOrders.filter(o => o.status === "odeme"));
   const kargo = filterBySearch(allOrders.filter(o => o.status === "kargo"));
@@ -394,4 +442,4 @@ function render(){
 }
 </script>
 </body>
-  </html>
+</html>
