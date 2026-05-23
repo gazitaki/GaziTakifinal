@@ -9,15 +9,14 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{ font-family:Arial, sans-serif; background:#111; color:white; margin:0; padding:12px; box-sizing: border-box; }
+body{ font-family:Arial, sans-serif; background:#111; color:white; margin:0; padding:12px; box-sizing:border-box; }
 .card{ background:#222; padding:12px; margin-bottom:12px; border-radius:12px; box-sizing:border-box; }
 input,select,button{ width:100%; padding:10px; margin-top:6px; border:none; border-radius:8px; box-sizing:border-box; font-size:14px; }
 button{ cursor:pointer; font-weight:bold; }
 .primary{ background:#00b894; color:white; }
-.editBtn{ background:#0984e3; color:white; margin-top:5px; }
 .deleteBtn{ background:#d63031; color:white; margin-top:5px; }
 .passiveBtn{ background:#e17055; color:white; margin-top:5px; }
-.iptalBtn{ background:#636e72; color:white; margin-top:8px; padding:10px; border-radius:8px; font-weight:bold; }
+.iptalBtn{ background:#636e72; color:white; margin-top:8px; padding:10px; border-radius:8px; font-weight:bold; width:100%; border:none; cursor:pointer; font-size:14px; }
 
 .stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:15px; }
 .statBox{ background:#1c1c1c; padding:12px 6px; border-radius:12px; text-align:center; font-size:12px; font-weight:bold; position:relative; }
@@ -33,19 +32,11 @@ button{ cursor:pointer; font-weight:bold; }
 .filterLabel{ font-size:9px; color:#888; margin-top:2px; display:block; }
 
 #products{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
-.productImage{ width:100%; height:130px; object-fit:cover; border-radius:10px; background:#333; cursor:pointer; transition:opacity .2s; }
-.productImage:active{ opacity:.7; }
-.productImage.pasif-img { opacity: 0.4; filter: grayscale(100%); }
-.badge{ background:#0984e3; padding:3px 7px; border-radius:6px; font-size:11px; display:inline-block; margin-top:4px; }
+.productImage{ width:100%; height:130px; object-fit:cover; border-radius:10px; background:#333; cursor:pointer; }
+.productImage.pasif-img{ opacity:0.4; filter:grayscale(100%); }
 
 .orderItem{ display:flex; gap:10px; align-items:center; background:#1a1a1a; padding:8px; border-radius:10px; margin-top:6px; }
 .orderItem img{ width:60px; height:60px; object-fit:cover; border-radius:8px; background:#333; cursor:pointer; flex-shrink:0; }
-.orderItem img:active{ opacity:.7; }
-
-.statusTag{ padding:4px 8px; border-radius:6px; font-size:11px; display:inline-block; margin-top:5px; font-weight:bold; }
-.tag-yeni{ background:#e17055; }
-.tag-odeme{ background:#0984e3; }
-.tag-kargo{ background:#6c5ce7; }
 
 .nextBtn{ margin-top:8px; padding:10px; border-radius:8px; font-weight:bold; border:none; cursor:pointer; width:100%; font-size:13px; }
 .nextBtn-yeni{ background:linear-gradient(90deg,#f39c12,#e67e22); color:white; }
@@ -58,68 +49,38 @@ button{ cursor:pointer; font-weight:bold; }
 .countBadge{ background:#333; padding:2px 8px; border-radius:20px; font-size:11px; margin-left:8px; }
 
 .arsivRow{ display:flex; justify-content:space-between; align-items:center; padding:10px; background:#1a1a1a; border-radius:10px; margin-bottom:6px; font-size:13px; }
-.arsivRow .name{ font-weight:bold; }
 .arsivRow .detail{ color:#aaa; font-size:11px; margin-top:2px; }
 .arsivRow .tutar{ color:#00d084; font-weight:bold; font-size:14px; }
 
-#loginPage { max-width:400px; margin:60px auto; padding:20px; }
-#adminContent { display:none; }
+#loginPage{ max-width:400px; margin:60px auto; padding:20px; }
+#adminContent{ display:none; }
 
-/* ZOOM MODAL */
-.zoomModal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.95);
-  z-index:999;
-  justify-content:center;
-  align-items:center;
-}
+/* ZOOM */
+.zoomModal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.95); z-index:999; justify-content:center; align-items:center; }
 .zoomModal.show{ display:flex; }
-.zoomModal img{
-  max-width:95vw;
-  max-height:95vh;
-  object-fit:contain;
-  border-radius:10px;
-}
-.zoomClose{
-  position:absolute;
-  top:14px; right:14px;
-  width:38px; height:38px;
-  background:white;
-  color:#111;
-  border:none;
-  border-radius:50%;
-  font-size:22px;
-  font-weight:900;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:1000;
-}
+.zoomModal img{ max-width:95vw; max-height:95vh; object-fit:contain; border-radius:10px; }
+.zoomClose{ position:absolute; top:14px; right:14px; width:38px; height:38px; background:white; color:#111; border:none; border-radius:50%; font-size:22px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:1000; }
 </style>
 </head>
 <body>
 
-<!-- ZOOM MODAL -->
 <div class="zoomModal" id="zoomModal" onclick="closeZoom()">
   <button class="zoomClose" onclick="closeZoom()">×</button>
   <img id="zoomImg" onclick="event.stopPropagation()">
 </div>
 
 <div id="loginPage" class="card">
-  <h2 style="text-align:center; color:#00b894; margin-top:0;">🔐 Gazi Takı Giriş</h2>
+  <h2 style="text-align:center;color:#00b894;margin-top:0;">🔐 Gazi Takı Giriş</h2>
   <input id="loginEmail" type="email" placeholder="E-posta adresiniz">
   <input id="loginPassword" type="password" placeholder="Şifreniz">
   <button class="primary" style="margin-top:15px;" onclick="loginAdmin()">GİRİŞ YAP</button>
-  <p id="loginError" style="color:#d63031; font-size:13px; font-weight:bold; text-align:center; margin-top:10px;"></p>
+  <p id="loginError" style="color:#d63031;font-size:13px;font-weight:bold;text-align:center;margin-top:10px;"></p>
 </div>
 
 <div id="adminContent">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-    <h2 style="margin:0; font-size:20px;">🧑‍💼 Admin Panel</h2>
-    <button onclick="logoutAdmin()" style="width:auto; background:#333; padding:6px 12px; font-size:12px; margin:0;">🚪 Çıkış</button>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+    <h2 style="margin:0;font-size:20px;">🧑‍💼 Admin Panel</h2>
+    <button onclick="logoutAdmin()" style="width:auto;background:#333;padding:6px 12px;font-size:12px;margin:0;">🚪 Çıkış</button>
   </div>
 
   <div class="stats">
@@ -138,7 +99,7 @@ button{ cursor:pointer; font-weight:bold; }
     </div>
   </div>
 
-  <div class="card" style="padding:4px; margin-bottom:12px;">
+  <div class="card" style="padding:4px;margin-bottom:12px;">
     <input id="searchOrder" placeholder="👤 Müşteri adı veya 📞 tel no ile ara..." oninput="render()">
   </div>
 
@@ -181,12 +142,10 @@ button{ cursor:pointer; font-weight:bold; }
 const firebaseConfig = {
   apiKey: "AIzaSyBK4mibwFjSlrL7k-omOPn7oDZQVExYgJE",
   authDomain: "gazi-taki.firebaseapp.com",
-  databaseURL: "https://gazi-taki-default-rtdb.firebaseio.com",
   projectId: "gazi-taki",
   storageBucket: "gazi-taki.firebasestorage.app",
   messagingSenderId: "17296440633",
-  appId: "1:17296440633:web:aa3a2acc23cdafe1a97ce8",
-  measurementId: "G-CR0SXQPZTJ"
+  appId: "1:17296440633:web:aa3a2acc23cdafe1a97ce8"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -197,248 +156,257 @@ let products = [];
 let allOrders = [];
 let activeFilter = "hafta";
 
+// id'leri güvenli saklamak için map
+const orderMap = {};
+const productMap = {};
+
 auth.onAuthStateChanged(user => {
-  if (user) {
+  if(user){
     document.getElementById("loginPage").style.display = "none";
     document.getElementById("adminContent").style.display = "block";
-    startRealtimeListeners();
+    startListeners();
   } else {
     document.getElementById("loginPage").style.display = "block";
     document.getElementById("adminContent").style.display = "none";
   }
 });
 
-async function loginAdmin() {
+function loginAdmin(){
   const email = document.getElementById("loginEmail").value;
   const pass = document.getElementById("loginPassword").value;
-  const errBox = document.getElementById("loginError");
-  errBox.innerText = "";
-  try {
-    await auth.signInWithEmailAndPassword(email, pass);
-  } catch (error) {
-    errBox.innerText = "Hatalı Giriş: " + error.message;
-  }
+  const err = document.getElementById("loginError");
+  err.innerText = "";
+  auth.signInWithEmailAndPassword(email, pass).catch(e => { err.innerText = "Hatalı giriş: " + e.message; });
 }
 
-function logoutAdmin() { auth.signOut(); }
+function logoutAdmin(){ auth.signOut(); }
 
-function startRealtimeListeners() {
-  db.collection("products").onSnapshot(snapshot => {
-    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+function startListeners(){
+  db.collection("products").onSnapshot(snap => {
+    products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    products.forEach(p => { productMap[p.id] = p; });
     render();
   });
-  db.collection("orders").orderBy("date", "desc").onSnapshot(snapshot => {
-    allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  db.collection("orders").orderBy("date","desc").onSnapshot(snap => {
+    allOrders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    allOrders.forEach(o => { orderMap[o.id] = o; });
     render();
   });
 }
 
 // ZOOM
-function openZoom(src) {
+function openZoom(src){
   document.getElementById("zoomImg").src = src;
   document.getElementById("zoomModal").classList.add("show");
   document.body.style.overflow = "hidden";
 }
-function closeZoom() {
+function closeZoom(){
   document.getElementById("zoomModal").classList.remove("show");
   document.body.style.overflow = "";
 }
 
-function getRange(filter){
+// FİLTRE
+function getRange(f){
   const now = new Date();
-  if(filter === "hafta"){
-    const day = now.getDay(), diff = (day === 0) ? 6 : day - 1;
-    const start = new Date(now); start.setHours(0,0,0,0); start.setDate(now.getDate() - diff);
-    const end = new Date(start); end.setDate(start.getDate() + 7);
-    return {start, end};
+  if(f==="hafta"){
+    const day=now.getDay(), diff=(day===0)?6:day-1;
+    const s=new Date(now); s.setHours(0,0,0,0); s.setDate(now.getDate()-diff);
+    const e=new Date(s); e.setDate(s.getDate()+7);
+    return {start:s,end:e};
   }
-  if(filter === "ay") return {start: new Date(now.getFullYear(), now.getMonth(), 1), end: new Date(now.getFullYear(), now.getMonth() + 1, 1)};
-  if(filter === "yillik") return {start: new Date(now.getFullYear(), 0, 1), end: new Date(now.getFullYear() + 1, 0, 1)};
+  if(f==="ay") return {start:new Date(now.getFullYear(),now.getMonth(),1),end:new Date(now.getFullYear(),now.getMonth()+1,1)};
+  if(f==="yillik") return {start:new Date(now.getFullYear(),0,1),end:new Date(now.getFullYear()+1,0,1)};
   return null;
 }
-
-function calcFilteredMoney(){
-  const range = getRange(activeFilter);
-  let total = 0;
-  allOrders.forEach(o => {
-    if(o.status === "iptal") return;
-    if(range && o.date){
-      const d = new Date(o.date);
-      if(d < range.start || d >= range.end) return;
-    }
-    o.items?.forEach(it => { total += (it.qty || 0) * (it.fiyat || 0); });
+function calcMoney(){
+  const range=getRange(activeFilter);
+  let t=0;
+  allOrders.forEach(o=>{
+    if(o.status==="iptal") return;
+    if(range && o.date){ const d=new Date(o.date); if(d<range.start||d>=range.end) return; }
+    o.items?.forEach(it=>{ t+=(it.qty||0)*(it.fiyat||0); });
   });
-  return total;
+  return t;
 }
-
 function toggleFilter(e){
   e.stopPropagation();
   document.getElementById("filterPanel").classList.toggle("show");
 }
-
-function setFilter(key, label, el){
-  activeFilter = key;
-  document.getElementById("filterLabel").innerText = label;
-  document.querySelectorAll(".filterOption").forEach(o => o.classList.remove("active"));
+function setFilter(key,label,el){
+  activeFilter=key;
+  document.getElementById("filterLabel").innerText=label;
+  document.querySelectorAll(".filterOption").forEach(o=>o.classList.remove("active"));
   el.classList.add("active");
-  document.getElementById("totalMoney").innerText = calcFilteredMoney() + "₺";
+  document.getElementById("totalMoney").innerText=calcMoney()+"₺";
 }
-
-document.addEventListener("click", () => {
-  const fp = document.getElementById("filterPanel");
-  if(fp) fp.classList.remove("show");
-});
+document.addEventListener("click",()=>{ document.getElementById("filterPanel")?.classList.remove("show"); });
 
 function goBolum(key){
-  ["yeni","odeme","kargo","iptal","arsiv","urunler"].forEach(k => {
-    document.getElementById("body-"+k).classList.toggle("show", k === key);
+  ["yeni","odeme","kargo","iptal","arsiv","urunler"].forEach(k=>{
+    document.getElementById("body-"+k).classList.toggle("show",k===key);
   });
 }
 
 function calcTotal(order){
-  let t = 0;
-  order.items?.forEach(it => { t += (it.qty || 0) * (it.fiyat || 0); });
+  let t=0;
+  order.items?.forEach(it=>{ t+=(it.qty||0)*(it.fiyat||0); });
   return t;
 }
 
-function waLink(telefon, mesaj){
-  const num = telefon.replace(/\D/g,"");
-  const full = num.startsWith("90") ? num : "90" + num;
-  return "https://wa.me/" + full + "?text=" + encodeURIComponent(mesaj);
+function waLink(tel,msg){
+  const n=tel.replace(/\D/g,"");
+  return "https://wa.me/"+(n.startsWith("90")?n:"90"+n)+"?text="+encodeURIComponent(msg);
 }
 
-async function addProduct(){
-  if(!ad.value || !fiyat.value) return alert("Ad ve Fiyat giriniz!");
-  await db.collection("products").add({
-    ad: ad.value,
-    fiyat: parseFloat(fiyat.value),
-    resim: resim.value,
-    category: kategori.value,
-    aktif: true
-  });
-  ad.value=""; fiyat.value=""; resim.value="";
+// ÜRÜN İŞLEMLERİ
+function addProduct(){
+  const adV=document.getElementById("ad").value.trim();
+  const fiyatV=document.getElementById("fiyat").value.trim();
+  const resimV=document.getElementById("resim").value.trim();
+  const katV=document.getElementById("kategori").value;
+  if(!adV||!fiyatV){ alert("Ad ve Fiyat giriniz!"); return; }
+  db.collection("products").add({ ad:adV, fiyat:parseFloat(fiyatV), resim:resimV, category:katV, aktif:true });
+  document.getElementById("ad").value="";
+  document.getElementById("fiyat").value="";
+  document.getElementById("resim").value="";
 }
 
-async function toggleProductStatus(id, status) {
-  await db.collection("products").doc(id).update({ aktif: !status });
+function toggleProductStatus(idx){
+  const p = products[idx];
+  if(!p) return;
+  db.collection("products").doc(p.id).update({ aktif: !(p.aktif !== false) });
 }
 
-async function deleteProduct(id){
-  if(confirm("Silinsin mi?")) await db.collection("products").doc(id).delete();
+function deleteProduct(idx){
+  const p = products[idx];
+  if(!p) return;
+  if(confirm("Silinsin mi?")) db.collection("products").doc(p.id).delete();
 }
 
-async function nextStatus(id, current){
-  const map = { yeni: "odeme", odeme: "kargo", kargo: "arsiv" };
-  const updateData = { status: map[current] };
-  if(map[current] === "arsiv") updateData.arsivTarihi = new Date().toLocaleDateString("tr-TR");
-  await db.collection("orders").doc(id).update(updateData);
+// SİPARİŞ İŞLEMLERİ
+function nextStatus(idx){
+  const o = allOrders[idx];
+  if(!o) return;
+  const map = { yeni:"odeme", odeme:"kargo", kargo:"arsiv" };
+  const newStatus = map[o.status||"yeni"];
+  if(!newStatus) return;
+  const update = { status: newStatus };
+  if(newStatus==="arsiv") update.arsivTarihi = new Date().toLocaleDateString("tr-TR");
+  db.collection("orders").doc(o.id).update(update);
 }
 
-async function iptalEt(id){
-  if(confirm("İptal edilsin mi?")) {
-    await db.collection("orders").doc(id).update({
-      status: "iptal",
-      iptalTarihi: new Date().toLocaleDateString("tr-TR")
-    });
+function iptalEt(idx){
+  const o = allOrders[idx];
+  if(!o) return;
+  if(confirm("İptal edilsin mi?")){
+    db.collection("orders").doc(o.id).update({ status:"iptal", iptalTarihi:new Date().toLocaleDateString("tr-TR") });
   }
 }
 
-function printOrder(id){
-  const order = allOrders.find(o => o.id === id);
-  if(!order) return;
-  let win = window.open("","_blank");
-  let html = `<h2>GAZİ TAKI SİPARİŞ</h2><hr>Müşteri: ${order.customer?.isim}<br>Tel: ${order.customer?.telefon}<br>Adres: ${order.customer?.adres}<br><hr>`;
-  order.items?.forEach(it => {
-    html += `<div>${it.ad} - ${it.qty} Adet - ${it.fiyat}₺</div>`;
-  });
-  html += `<hr><h3>Toplam: ${calcTotal(order)}₺</h3><script>window.print();<\/script>`;
+function printOrder(idx){
+  const o = allOrders[idx];
+  if(!o) return;
+  const win = window.open("","_blank");
+  let html=`<h2>GAZİ TAKI SİPARİŞ</h2><hr>Müşteri: ${o.customer?.isim}<br>Tel: ${o.customer?.telefon}<br>Adres: ${o.customer?.adres}<br><hr>`;
+  o.items?.forEach(it=>{ html+=`<div>${it.ad} - ${it.qty} Adet - ${it.fiyat}₺</div>`; });
+  html+=`<hr><h3>Toplam: ${calcTotal(o)}₺</h3><script>window.print();<\/script>`;
   win.document.write(html); win.document.close();
 }
 
-function buildCard(order){
-  let total = calcTotal(order);
-  const status = order.status || "yeni";
-  const tel = order.customer?.telefon || "";
-  const isim = order.customer?.isim || "";
+function buildCard(order, idx){
+  const total=calcTotal(order);
+  const status=order.status||"yeni";
+  const tel=order.customer?.telefon||"";
+  const isim=order.customer?.isim||"";
 
-  let html = `<div class="card">
-    <b style="font-size:11px;color:#aaa">${order.id}</b><br>
-    👤 ${isim} | 📞 ${tel}<br>📍 ${order.customer?.adres || ""}
+  let html=`<div class="card">
+    <b style="font-size:11px;color:#aaa">${order.id||""}</b><br>
+    👤 ${isim} | 📞 ${tel}<br>📍 ${order.customer?.adres||""}
     <hr>`;
 
-  order.items?.forEach(it => {
-    const resimSrc = it.resim || 'https://via.placeholder.com/60';
-    html += `<div class="orderItem">
-      <img src="${resimSrc}" onclick="openZoom('${resimSrc}')">
+  order.items?.forEach(it=>{
+    const src=it.resim||"https://via.placeholder.com/60";
+    html+=`<div class="orderItem">
+      <img src="${src}" onclick="openZoom('${src.replace(/'/g,"\\'")}')">
       <div><b>${it.ad}</b><br>${it.qty} adet x ${it.fiyat}₺</div>
     </div>`;
   });
 
-  const waOdeme = waLink(tel, `Merhaba ${isim}, siparişiniz hazırlandı 🛍️\nÖdeme bekliyoruz.\nToplam: ${total}₺`);
-  const waKargo = waLink(tel, `Merhaba ${isim}, siparişiniz kargoya verildi! 📦`);
+  const waOdeme=waLink(tel,`Merhaba ${isim}, siparişiniz hazırlandı 🛍️\nÖdeme bekliyoruz.\nToplam: ${total}₺`);
+  const waKargo=waLink(tel,`Merhaba ${isim}, siparişiniz kargoya verildi! 📦`);
 
-  let nextBtn = "", waBtn = "";
-  if(status === "yeni") nextBtn = `<button class="nextBtn nextBtn-yeni" onclick="nextStatus('${order.id}','yeni')">🟡 Ödeme Bekleyene Taşı →</button>`;
-  if(status === "odeme") {
-    nextBtn = `<button class="nextBtn nextBtn-odeme" onclick="nextStatus('${order.id}','odeme')">🟣 Kargoya Ver →</button>`;
-    waBtn = `<a class="waBtn" href="${waOdeme}" target="_blank">💬 WhatsApp - Ödeme İste</a>`;
+  let nextBtn="", waBtn="";
+  if(status==="yeni"){
+    nextBtn=`<button class="nextBtn nextBtn-yeni" onclick="nextStatus(${idx})">🟡 Ödeme Bekleyene Taşı →</button>`;
   }
-  if(status === "kargo") {
-    nextBtn = `<button class="nextBtn primary" onclick="nextStatus('${order.id}','kargo')">📁 Arşive Gönder</button>`;
-    waBtn = `<a class="waBtn" href="${waKargo}" target="_blank">💬 WhatsApp - Kargo Bilgisi</a>`;
+  if(status==="odeme"){
+    nextBtn=`<button class="nextBtn nextBtn-odeme" onclick="nextStatus(${idx})">🟣 Kargoya Ver →</button>`;
+    waBtn=`<a class="waBtn" href="${waOdeme}" target="_blank">💬 WhatsApp - Ödeme İste</a>`;
+  }
+  if(status==="kargo"){
+    nextBtn=`<button class="nextBtn primary" onclick="nextStatus(${idx})">📁 Arşive Gönder</button>`;
+    waBtn=`<a class="waBtn" href="${waKargo}" target="_blank">💬 WhatsApp - Kargo Bilgisi</a>`;
   }
 
-  html += `<hr><b>💰 TOPLAM: ${total}₺</b><br>
+  html+=`<hr><b>💰 TOPLAM: ${total}₺</b>
     ${nextBtn}${waBtn}
-    <button onclick="printOrder('${order.id}')" style="margin-top:6px; background:#444; color:white;">🖨 Yazdır</button>
-    <button class="iptalBtn" onclick="iptalEt('${order.id}')">❌ İptal Et</button>
+    <button onclick="printOrder(${idx})" style="margin-top:6px;background:#444;color:white;">🖨 Yazdır</button>
+    <button class="iptalBtn" onclick="iptalEt(${idx})">❌ İptal Et</button>
   </div>`;
   return html;
 }
 
 function render(){
-  document.getElementById("totalProducts").innerText = products.length;
-  document.getElementById("count-urunler").innerText = products.length;
-  document.getElementById("totalMoney").innerText = calcFilteredMoney() + "₺";
+  document.getElementById("totalProducts").innerText=products.length;
+  document.getElementById("count-urunler").innerText=products.length;
+  document.getElementById("totalMoney").innerText=calcMoney()+"₺";
 
-  const searchKey = document.getElementById("searchOrder").value.toLowerCase();
-  const filterBySearch = list => list.filter(o => (o.customer?.isim||"").toLowerCase().includes(searchKey) || (o.customer?.telefon||"").toLowerCase().includes(searchKey));
+  const key=document.getElementById("searchOrder").value.toLowerCase();
+  const bySearch=list=>list.filter(o=>(o.customer?.isim||"").toLowerCase().includes(key)||(o.customer?.telefon||"").toLowerCase().includes(key));
 
-  let p = "";
-  products.forEach(x => {
-    const isAktif = x.aktif !== false;
-    const resimSrc = x.resim || 'https://via.placeholder.com/150';
-    p += `<div class="card" style="padding:8px;">
-      <img class="productImage ${isAktif ? '' : 'pasif-img'}" src="${resimSrc}" onclick="openZoom('${resimSrc}')">
-      <div style="margin-top:5px; font-weight:bold; font-size:12px;">${x.ad}</div>
-      <div style="color:#00d084; font-weight:bold;">${x.fiyat}₺</div>
-      <button class="${isAktif ? 'primary' : 'passiveBtn'}" onclick="toggleProductStatus('${x.id}', ${isAktif})">${isAktif ? '🟢 Aktif' : '🔴 Pasif'}</button>
-      <button class="deleteBtn" onclick="deleteProduct('${x.id}')">🗑 Sil</button>
+  // Ürünler
+  let p="";
+  products.forEach((x,i)=>{
+    const isAktif=x.aktif!==false;
+    const src=x.resim||"https://via.placeholder.com/150";
+    p+=`<div class="card" style="padding:8px;">
+      <img class="productImage ${isAktif?'':'pasif-img'}" src="${src}" onclick="openZoom('${src.replace(/'/g,"\\'")}')">
+      <div style="margin-top:5px;font-weight:bold;font-size:12px;">${x.ad}</div>
+      <div style="color:#00d084;font-weight:bold;">${x.fiyat}₺</div>
+      <button class="${isAktif?'primary':'passiveBtn'}" onclick="toggleProductStatus(${i})">${isAktif?'🟢 Aktif':'🔴 Pasif'}</button>
+      <button class="deleteBtn" onclick="deleteProduct(${i})">🗑 Sil</button>
     </div>`;
   });
-  document.getElementById("products").innerHTML = p;
+  document.getElementById("products").innerHTML=p;
 
-  const yeni = filterBySearch(allOrders.filter(o => (o.status || "yeni") === "yeni"));
-  const odeme = filterBySearch(allOrders.filter(o => o.status === "odeme"));
-  const kargo = filterBySearch(allOrders.filter(o => o.status === "kargo"));
-  const iptal = filterBySearch(allOrders.filter(o => o.status === "iptal"));
-  const arsiv = filterBySearch(allOrders.filter(o => o.status === "arsiv"));
+  // Siparişler - index'i allOrders'daki gerçek index ile eşleştir
+  const yeniList=allOrders.map((o,i)=>({o,i})).filter(({o})=>(o.status||"yeni")==="yeni");
+  const odemeList=allOrders.map((o,i)=>({o,i})).filter(({o})=>o.status==="odeme");
+  const kargoList=allOrders.map((o,i)=>({o,i})).filter(({o})=>o.status==="kargo");
+  const iptalList=allOrders.map((o,i)=>({o,i})).filter(({o})=>o.status==="iptal");
+  const arsivList=allOrders.map((o,i)=>({o,i})).filter(({o})=>o.status==="arsiv");
 
-  document.getElementById("totalOrders").innerText = yeni.length + odeme.length + kargo.length;
-  document.getElementById("count-yeni").innerText = yeni.length;
-  document.getElementById("count-odeme").innerText = odeme.length;
-  document.getElementById("count-kargo").innerText = kargo.length;
-  document.getElementById("count-iptal").innerText = iptal.length;
-  document.getElementById("count-arsiv").innerText = arsiv.length;
+  const applySearch=list=>list.filter(({o})=>(o.customer?.isim||"").toLowerCase().includes(key)||(o.customer?.telefon||"").toLowerCase().includes(key));
 
-  const empty = "<p style='color:#666; padding:10px; font-size:12px;'>Kayıt bulunamadı.</p>";
+  document.getElementById("totalOrders").innerText=yeniList.length+odemeList.length+kargoList.length;
+  document.getElementById("count-yeni").innerText=yeniList.length;
+  document.getElementById("count-odeme").innerText=odemeList.length;
+  document.getElementById("count-kargo").innerText=kargoList.length;
+  document.getElementById("count-iptal").innerText=iptalList.length;
+  document.getElementById("count-arsiv").innerText=arsivList.length;
 
-  document.getElementById("body-yeni").innerHTML = yeni.length ? yeni.map(buildCard).join("") : empty;
-  document.getElementById("body-odeme").innerHTML = odeme.length ? odeme.map(buildCard).join("") : empty;
-  document.getElementById("body-kargo").innerHTML = kargo.length ? kargo.map(buildCard).join("") : empty;
+  const empty="<p style='color:#666;padding:10px;font-size:12px;'>Kayıt bulunamadı.</p>";
 
-  document.getElementById("body-iptal").innerHTML = iptal.length ? iptal.map(i => `<div class="arsivRow"><div><b>👤 ${i.customer?.isim}</b><div class="detail">📅 ${i.iptalTarihi || 'İptal'}</div></div><div class="tutar" style="color:#d63031">${calcTotal(i)}₺</div></div>`).join("") : empty;
-  document.getElementById("body-arsiv").innerHTML = arsiv.length ? arsiv.map(a => `<div class="arsivRow"><div><b>👤 ${a.customer?.isim}</b><div class="detail">📅 ${a.arsivTarihi || 'Arşiv'}</div></div><div class="tutar">${calcTotal(a)}₺</div></div>`).join("") : empty;
+  document.getElementById("body-yeni").innerHTML=applySearch(yeniList).length?applySearch(yeniList).map(({o,i})=>buildCard(o,i)).join(""):empty;
+  document.getElementById("body-odeme").innerHTML=applySearch(odemeList).length?applySearch(odemeList).map(({o,i})=>buildCard(o,i)).join(""):empty;
+  document.getElementById("body-kargo").innerHTML=applySearch(kargoList).length?applySearch(kargoList).map(({o,i})=>buildCard(o,i)).join(""):empty;
+
+  document.getElementById("body-iptal").innerHTML=applySearch(iptalList).length
+    ?applySearch(iptalList).map(({o})=>`<div class="arsivRow"><div><b>👤 ${o.customer?.isim}</b><div class="detail">📅 ${o.iptalTarihi||'İptal'}</div></div><div class="tutar" style="color:#d63031">${calcTotal(o)}₺</div></div>`).join("")
+    :empty;
+  document.getElementById("body-arsiv").innerHTML=applySearch(arsivList).length
+    ?applySearch(arsivList).map(({o})=>`<div class="arsivRow"><div><b>👤 ${o.customer?.isim}</b><div class="detail">📅 ${o.arsivTarihi||'Arşiv'}</div></div><div class="tutar">${calcTotal(o)}₺</div></div>`).join("")
+    :empty;
 }
 </script>
 </body>
