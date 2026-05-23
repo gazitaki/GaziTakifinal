@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gazi Takı Admin Panel</title>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<style>
+body{ font-family:Arial, sans-serif; background:#111; color:white; margin:0; padding:12px; box-sizing: border-box; }
+.card{ background:#222; padding:12px; margin-bottom:12px; border-radius:12px; box-sizing:border-box; }
+input,select,button{ width:100%; padding:10px; margin-top:6px; border:none; border-radius:8px; box-sizing:border-box; font-size:14px; }
+button{ cursor:pointer; font-weight:bold; }
+.primary{ background:#00b894; color:white; }
+.editBtn{ background:#0984e3; color:white; margin-top:5px; }
+.deleteBtn{ background:#d63031; color:white; margin-top:5px; }
+.passiveBtn{ background:#e17055; color:white; margin-top:5px; }
+.iptalBtn{ background:#636e72; color:white; margin-top:8px; padding:10px; border-radius:8px; font-weight:bold; }
+
+.stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:15px; }
+.statBox{ background:#1c1c1c; padding:12px 6px; border-radius:12px; text-align:center; font-size:12px; font-weight:bold; position:relative; }
+.statBox b{ display:block; font-size:16px; margin-top:5px; color:#00d084; }
+
+.filterIcon{ position:absolute; top:4px; right:4px; background:#333; border:none; color:white; width:20px; height:20px; border-radius:4px; cursor:pointer; font-size:10px; display:flex; align-items:center; justify-content:center; }
+.filterPanel{ display:none; position:absolute; top:30px; right:0; background:#222; border:1px solid #333; border-radius:10px; overflow:hidden; z-index:100; min-width:120px; box-shadow:0 4px 15px rgba(0,0,0,.5); }
+.filterPanel.show{ display:block; }
+.filterOption{ padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; border-bottom:1px solid #333; text-align:left; }
+.filterOption:last-child{ border-bottom:none; }
+.filterOption:hover{ background:#2a2a2a; }
+.filterOption.active{ color:#00d084; }
+.filterLabel{ font-size:9px; color:#888; margin-top:2px; display:block; }
+
+#products{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.productImage{ width:100%; height:130px; object-fit:cover; border-radius:10px; background:#333; }
+.productImage.pasif-img { opacity: 0.4; filter: grayscale(100%); }
+.badge{ background:#0984e3; padding:3px 7px; border-radius:6px; font-size:11px; display:inline-block; margin-top:4px; }
+
+.orderItem{ display:flex; gap:10px; align-items:center; background:#1a1a1a; padding:8px; border-radius:10px; margin-top:6px; }
+.orderItem img{ width:60px; height:60px; object-fit:cover; border-radius:8px; background:#333; }
+
+.statusTag{ padding:4px 8px; border-radius:6px; font-size:11px; display:inline-block; margin-top:5px; font-weight:bold; }
+.tag-yeni{ background:#e17055; }
+.tag-odeme{ background:#0984e3; }
+.tag-kargo{ background:#6c5ce7; }
+
+.nextBtn{ margin-top:8px; padding:10px; border-radius:8px; font-weight:bold; border:none; cursor:pointer; width:100%; font-size:13px; }
+.nextBtn-yeni{ background:linear-gradient(90deg,#f39c12,#e67e22); color:white; }
+.nextBtn-odeme{ background:linear-gradient(90deg,#2980b9,#3498db); color:white; }
+.waBtn{ background:#25d366; color:white; margin-top:8px; display:block; text-align:center; text-decoration:none; padding:10px; border-radius:8px; font-weight:bold; font-size:13px; box-sizing:border-box; }
+
+.bolumBaslik{ background:#1c1c1c; padding:12px; border-radius:10px; margin-bottom:6px; font-size:14px; font-weight:bold; border-left:4px solid #00b894; cursor:pointer; display:flex; align-items:center; justify-content:space-between; user-select:none; }
+.bolumIcerik{ display:none; margin-bottom:10px; }
+.bolumIcerik.show{ display:block; }
+.countBadge{ background:#333; padding:2px 8px; border-radius:20px; font-size:11px; margin-left:8px; }
+
+.arsivRow{ display:flex; justify-content:space-between; align-items:center; padding:10px; background:#1a1a1a; border-radius:10px; margin-bottom:6px; font-size:13px; }
+.arsivRow .name{ font-weight:bold; }
+.arsivRow .detail{ color:#aaa; font-size:11px; margin-top:2px; }
+.arsivRow .tutar{ color:#00d084; font-weight:bold; font-size:14px; }
+
+#loginPage { max-width:400px; margin:60px auto; padding:20px; }
+#adminContent { display:none; }
+</style>
+</head>
+<body>
+
+<div id="loginPage" class="card">
+  <h2 style="text-align:center; color:#00b894; margin-top:0;">🔐 Gazi Takı Giriş</h2>
+  <input id="loginEmail" type="email" placeholder="E-posta adresiniz">
+  <input id="loginPassword" type="password" placeholder="Şifreniz">
+  <button class="primary" style="margin-top:15px;" onclick="loginAdmin()">GİRİŞ YAP</button>
+  <p id="loginError" style="color:#d63031; font-size:13px; font-weight:bold; text-align:center; margin-top:10px;"></p>
+</div>
+
+<div id="adminContent">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <h2 style="margin:0; font-size:20px;">🧑‍💼 Admin Panel</h2>
+    <button onclick="logoutAdmin()" style="width:auto; background:#333; padding:6px 12px; font-size:12px; margin:0;">🚪 Çıkış</button>
+  </div>
+
+  <div class="stats">
+    <div class="statBox">📦 Sipariş<b id="totalOrders">0</b></div>
+    <div class="statBox">🛒 Ürün<b id="totalProducts">0</b></div>
+    <div class="statBox">
+      💰 Kazanç<b id="totalMoney">0₺</b>
+      <span class="filterLabel" id="filterLabel">Bu Hafta</span>
+      <button class="filterIcon" onclick="toggleFilter(event)">☰</button>
+      <div class="filterPanel" id="filterPanel">
+        <div class="filterOption active" onclick="setFilter('hafta','Bu Hafta',this)">Bu Hafta</div>
+        <div class="filterOption" onclick="setFilter('ay','Bu Ay',this)">Bu Ay</div>
+        <div class="filterOption" onclick="setFilter('yillik','Bu Yıl',this)">Bu Yıl</div>
+        <div class="filterOption" onclick="setFilter('hepsi','Tüm Zamanlar',this)">Tüm Zamanlar</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:4px; margin-bottom:12px;">
+    <input id="searchOrder" placeholder="👤 Müşteri adı veya 📞 tel no ile ara..." oninput="render()">
+  </div>
+
+  <div class="bolumBaslik" style="border-left-color:#e17055" onclick="goBolum('yeni')">🟠 Yeni Siparişler <span class="countBadge" id="count-yeni">0</span></div>
+  <div class="bolumIcerik show" id="body-yeni"></div>
+
+  <div class="bolumBaslik" style="border-left-color:#0984e3" onclick="goBolum('odeme')">🟡 Ödeme Bekleyen <span class="countBadge" id="count-odeme">0</span></div>
+  <div class="bolumIcerik" id="body-odeme"></div>
+
+  <div class="bolumBaslik" style="border-left-color:#6c5ce7" onclick="goBolum('kargo')">Purple Kargoda <span class="countBadge" id="count-kargo">0</span></div>
+  <div class="bolumIcerik" id="body-kargo"></div>
+
+  <div class="bolumBaslik" style="border-left-color:#d63031" onclick="goBolum('iptal')">❌ İptal Edilenler <span class="countBadge" id="count-iptal">0</span></div>
+  <div class="bolumIcerik" id="body-iptal"></div>
+
+  <div class="bolumBaslik" style="border-left-color:#00b894" onclick="goBolum('arsiv')">📁 Arşiv <span class="countBadge" id="count-arsiv">0</span></div>
+  <div class="bolumIcerik" id="body-arsiv"></div>
+
+  <div class="card">
+    <h3>📦 Ürün Ekle</h3>
+    <input id="ad" placeholder="Ürün adı">
+    <input id="fiyat" type="number" placeholder="Fiyat">
+    <input id="resim" placeholder="Resim link">
+    <select id="kategori">
+      <option value="Bileklik">Bileklik</option>
+      <option value="Küpe">Küpe</option>
+      <option value="Kolye">Kolye</option>
+      <option value="Xuping">Xuping</option>
+    </select>
+    <button class="primary" onclick="addProduct()">➕ EKLE</button>
+  </div>
+
+  <div class="bolumBaslik" style="border-left-color:#0984e3" onclick="goBolum('urunler')">📦 Ürün Listesi <span class="countBadge" id="count-urunler">0</span></div>
+  <div class="bolumIcerik" id="body-urunler">
+    <div id="products"></div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBK4mibwFjSlrL7k-omOPn7oDZQVExYgJE",
+  authDomain: "gazi-taki.firebaseapp.com",
+  databaseURL: "https://gazi-taki-default-rtdb.firebaseio.com",
+  projectId: "gazi-taki",
+  storageBucket: "gazi-taki.firebasestorage.app",
+  messagingSenderId: "17296440633",
+  appId: "1:17296440633:web:aa3a2acc23cdafe1a97ce8",
+  measurementId: "G-CR0SXQPZTJ"
+};
+
+// Firebase Başlat
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let products = [];
+let allOrders = [];
+let activeFilter = "hafta";
+
+// Oturum Durumu Kontrolü
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("adminContent").style.display = "block";
+    startRealtimeListeners();
+  } else {
+    document.getElementById("loginPage").style.display = "block";
+    document.getElementById("adminContent").style.display = "none";
+  }
+});
+
+async function loginAdmin() {
+  const email = document.getElementById("loginEmail").value;
+  const pass = document.getElementById("loginPassword").value;
+  const errBox = document.getElementById("loginError");
+  errBox.innerText = "";
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (error) {
+    errBox.innerText = "Hatalı Giriş: " + error.message;
+  }
+}
+
+function logoutAdmin() { auth.signOut(); }
+
+function startRealtimeListeners() {
+  db.collection("products").onSnapshot(snapshot => {
+    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    render();
+  });
+
+  db.collection("orders").orderBy("date", "desc").onSnapshot(snapshot => {
+    allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    render();
+  });
+}
+
+// Tarih Filtreleme Fonksiyonu
+function getRange(filter){
+  const now = new Date();
+  if(filter === "hafta"){
+    const day = now.getDay(), diff = (day === 0) ? 6 : day - 1;
+    const start = new Date(now); start.setHours(0,0,0,0); start.setDate(now.getDate() - diff);
+    const end = new Date(start); end.setDate(start.getDate() + 7);
+    return {start, end};
+  }
+  if(filter === "ay") return {start: new Date(now.getFullYear(), now.getMonth(), 1), end: new Date(now.getFullYear(), now.getMonth() + 1, 1)};
+  if(filter === "yillik") return {start: new Date(now.getFullYear(), 0, 1), end: new Date(now.getFullYear() + 1, 0, 1)};
+  return null;
+}
+
+function calcFilteredMoney(){
+  const range = getRange(activeFilter);
+  let total = 0;
+  allOrders.forEach(o => {
+    if(o.status === "iptal") return;
+    if(range && o.date){
+      const d = new Date(o.date);
+      if(d < range.start || d >= range.end) return;
+    }
+    o.items?.forEach(it => { total += (it.qty || 0) * (it.fiyat || 0); });
+  });
+  return total;
+}
+
+function toggleFilter(e){
+  e.stopPropagation();
+  document.getElementById("filterPanel").classList.toggle("show");
+}
+
+function setFilter(key, label, el){
+  activeFilter = key;
+  document.getElementById("filterLabel").innerText = label;
+  document.querySelectorAll(".filterOption").forEach(o => o.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById("totalMoney").innerText = calcFilteredMoney() + "₺";
+}
+
+document.addEventListener("click", () => {
+  const fp = document.getElementById("filterPanel");
+  if(fp) fp.classList.remove("show");
+});
+
+function goBolum(key){
+  ["yeni","odeme","kargo","iptal","arsiv","urunler"].forEach(k => {
+    document.getElementById("body-"+k).classList.toggle("show", k === key);
+  });
+}
+
+function calcTotal(order){
+  let t = 0;
+  order.items?.forEach(it => { t += (it.qty || 0) * (it.fiyat || 0); });
+  return t;
+}
+
+function waLink(telefon, mesaj){
+  const num = telefon.replace(/\D/g,"");
+  const full = num.startsWith("90") ? num : "90" + num;
+  return "https://wa.me/" + full + "?text=" + encodeURIComponent(mesaj);
+}
+
+// Firestore Eylemleri
+async function addProduct(){
+  if(!ad.value || !fiyat.value) return alert("Ad ve Fiyat giriniz!");
+  await db.collection("products").add({
+    ad: ad.value,
+    fiyat: parseFloat(fiyat.value),
+    resim: resim.value,
+    category: kategori.value,
+    aktif: true
+  });
+  ad.value=""; fiyat.value=""; resim.value="";
+}
+
+async function toggleProductStatus(id, status) {
+  await db.collection("products").doc(id).update({ aktif: !status });
+}
+
+async function deleteProduct(id){
+  if(confirm("Silinsin mi?")) await db.collection("products").doc(id).delete();
+}
+
+async function nextStatus(id, current){
+  const map = { yeni: "odeme", odeme: "kargo", kargo: "arsiv" };
+  const updateData = { status: map[current] };
+  if(map[current] === "arsiv") updateData.arsivTarihi = new Date().toLocaleDateString("tr-TR");
+  await db.collection("orders").doc(id).update(updateData);
+}
+
+async function iptalEt(id){
+  if(confirm("İptal edilsin mi?")) {
+    await db.collection("orders").doc(id).update({
+      status: "iptal",
+      iptalTarihi: new Date().toLocaleDateString("tr-TR")
+    });
+  }
+}
+
+function printOrder(id){
+  const order = allOrders.find(o => o.id === id);
+  if(!order) return;
+  let win = window.open("","_blank");
+  let html = `<h2>GAZİ TAKI SİPARİŞ</h2><hr>Müşteri: ${order.customer?.isim}<br>Tel: ${order.customer?.telefon}<br>Adres: ${order.customer?.adres}<br><hr>`;
+  order.items?.forEach(it => {
+    html += `<div>${it.ad} - ${it.qty} Adet - ${it.fiyat}₺</div>`;
+  });
+  html += `<hr><h3>Toplam: ${calcTotal(order)}₺</h3><script>window.print();<\/script>`;
+  win.document.write(html); win.document.close();
+}
+
+function buildCard(order){
+  let total = calcTotal(order);
+  const status = order.status || "yeni";
+  const tel = order.customer?.telefon || "";
+  const isim = order.customer?.isim || "";
+
+  let html = `<div class="card">
+    <b style="font-size:11px;color:#aaa">${order.id}</b><br>
+    👤 ${isim} | 📞 ${tel}<br>📍 ${order.customer?.adres || ""}
+    <hr>`;
+
+  order.items?.forEach(it => {
+    html += `<div class="orderItem">
+      <img src="${it.resim || 'https://via.placeholder.com/60'}">
+      <div><b>${it.ad}</b><br>${it.qty} adet x ${it.fiyat}₺</div>
+    </div>`;
+  });
+
+  const waOdeme = waLink(tel, `Merhaba ${isim}, siparişiniz hazırlandı 🛍️\nÖdeme bekliyoruz.\nToplam: ${total}₺`);
+  const waKargo = waLink(tel, `Merhaba ${isim}, siparişiniz kargoya verildi! 📦`);
+
+  let nextBtn = "", waBtn = "";
+  if(status === "yeni") nextBtn = `<button class="nextBtn nextBtn-yeni" onclick="nextStatus('${order.id}','yeni')">🟡 Ödeme Bekleyene Taşı →</button>`;
+  if(status === "odeme") {
+    nextBtn = `<button class="nextBtn nextBtn-odeme" onclick="nextStatus('${order.id}','odeme')">🟣 Kargoya Ver →</button>`;
+    waBtn = `<a class="waBtn" href="${waOdeme}" target="_blank">💬 WhatsApp - Ödeme İste</a>`;
+  }
+  if(status === "kargo") {
+    nextBtn = `<button class="nextBtn primary" onclick="nextStatus('${order.id}','kargo')">📁 Arşive Gönder</button>`;
+    waBtn = `<a class="waBtn" href="${waKargo}" target="_blank">💬 WhatsApp - Kargo Bilgisi</a>`;
+  }
+
+  html += `<hr><b>💰 TOPLAM: ${total}₺</b><br>
+    ${nextBtn}${waBtn}
+    <button onclick="printOrder('${order.id}')" style="margin-top:6px; background:#444; color:white;">🖨 Yazdır</button>
+    <button class="iptalBtn" onclick="iptalEt('${order.id}')">❌ İptal Et</button>
+  </div>`;
+  return html;
+}
+
+function render(){
+  document.getElementById("totalProducts").innerText = products.length;
+  document.getElementById("count-urunler").innerText = products.length;
+  document.getElementById("totalMoney").innerText = calcFilteredMoney() + "₺";
+
+  const searchKey = document.getElementById("searchOrder").value.toLowerCase();
+  const filterBySearch = list => list.filter(o => (o.customer?.isim||"").toLowerCase().includes(searchKey) || (o.customer?.telefon||"").toLowerCase().includes(searchKey));
+
+  // Ürünleri Çiz
+  let p = "";
+  products.forEach(x => {
+    const isAktif = x.aktif !== false;
+    p += `<div class="card" style="padding:8px;">
+      <img class="productImage ${isAktif ? '' : 'pasif-img'}" src="${x.resim || 'https://via.placeholder.com/150'}">
+      <div style="margin-top:5px; font-weight:bold; font-size:12px;">${x.ad}</div>
+      <div style="color:#00d084; font-weight:bold;">${x.fiyat}₺</div>
+      <button class="${isAktif ? 'primary' : 'passiveBtn'}" onclick="toggleProductStatus('${x.id}', ${isAktif})">${isAktif ? '🟢 Aktif' : '🔴 Pasif'}</button>
+      <button class="deleteBtn" onclick="deleteProduct('${x.id}')">🗑 Sil</button>
+    </div>`;
+  });
+  document.getElementById("products").innerHTML = p;
+
+  // Siparişleri Çiz
+  const yeni = filterBySearch(allOrders.filter(o => (o.status || "yeni") === "yeni"));
+  const odeme = filterBySearch(allOrders.filter(o => o.status === "odeme"));
+  const kargo = filterBySearch(allOrders.filter(o => o.status === "kargo"));
+  const iptal = filterBySearch(allOrders.filter(o => o.status === "iptal"));
+  const arsiv = filterBySearch(allOrders.filter(o => o.status === "arsiv"));
+
+  document.getElementById("totalOrders").innerText = yeni.length + odeme.length + kargo.length;
+  document.getElementById("count-yeni").innerText = yeni.length;
+  document.getElementById("count-odeme").innerText = odeme.length;
+  document.getElementById("count-kargo").innerText = kargo.length;
+  document.getElementById("count-iptal").innerText = iptal.length;
+  document.getElementById("count-arsiv").innerText = arsiv.length;
+
+  const empty = "<p style='color:#666; padding:10px; font-size:12px;'>Kayıt bulunamadı.</p>";
+
+  document.getElementById("body-yeni").innerHTML = yeni.length ? yeni.map(buildCard).join("") : empty;
+  document.getElementById("body-odeme").innerHTML = odeme.length ? odeme.map(buildCard).join("") : empty;
+  document.getElementById("body-kargo").innerHTML = kargo.length ? kargo.map(buildCard).join("") : empty;
+
+  document.getElementById("body-iptal").innerHTML = iptal.length ? iptal.map(i => `<div class="arsivRow"><div><b>👤 ${i.customer?.isim}</b><div class="detail">📅 ${i.iptalTarihi || 'İptal'}</div></div><div class="tutar" style="color:#d63031">${calcTotal(i)}₺</div></div>`).join("") : empty;
+  document.getElementById("body-arsiv").innerHTML = arsiv.length ? arsiv.map(a => `<div class="arsivRow"><div><b>👤 ${a.customer?.isim}</b><div class="detail">📅 ${a.arsivTarihi || 'Arşiv'}</div></div><div class="tutar">${calcTotal(a)}₺</div></div>`).join("") : empty;
+}
+</script>
+</body>
+  </html>
