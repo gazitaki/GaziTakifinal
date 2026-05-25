@@ -499,21 +499,23 @@ body{
   <img id="zoomImg" onclick="event.stopPropagation()">
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-<script>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, push, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBK4mibwFjSlrL7k-omOPn7oDZQVExYgJE",
   authDomain: "gazi-taki.firebaseapp.com",
+  databaseURL: "https://gazi-taki-default-rtdb.firebaseio.com",
   projectId: "gazi-taki",
   storageBucket: "gazi-taki.firebasestorage.app",
   messagingSenderId: "17296440633",
   appId: "1:17296440633:web:2e5d897bc212a0ffa97ce8"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
 
 let products  = [];
 let activeCat = "all";
@@ -532,16 +534,20 @@ function img(url){
 
 async function loadData(){
   try{
-    const snapshot = await db.collection("products").get();
-    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    // Sadece aktif ürünleri göster
-    products = products.filter(p => p.aktif !== false);
+    const snapshot = await get(ref(db, "products"));
+    const val = snapshot.val();
+    if(val){
+      // Firebase obje olarak döner, diziye çevir
+      products = Array.isArray(val) ? val : Object.values(val);
+    } else {
+      products = [];
+    }
     renderGrid();
   }catch(e){ console.error("Veri yüklenemedi:", e); }
 }
 
 async function saveOrder(order){
-  await db.collection("orders").add(order);
+  await push(ref(db, "orders"), order);
 }
 
 function filterCat(cat,el){
@@ -578,14 +584,14 @@ function renderGrid(){
   }).join("");
 }
 
-function plus(id,ad,fiyat,resim,category){
+window.plus = function(id,ad,fiyat,resim,category){
   if(!cart[id]) cart[id]={id,ad,fiyat,resim,category,qty:0};
   cart[id].qty++;
   updateCartUI();
   renderGrid();
 }
 
-function minus(id){
+window.minus = function(id){
   if(!cart[id]) return;
   cart[id].qty--;
   if(cart[id].qty<=0) delete cart[id];
@@ -593,7 +599,7 @@ function minus(id){
   renderGrid();
 }
 
-function removeItem(id){
+window.removeItem = function(id){
   delete cart[id];
   updateCartUI();
   renderGrid();
@@ -642,19 +648,19 @@ function renderCartItems(){
     </div>`).join("");
 }
 
-function openCart(){
+window.openCart = function(){
   renderCartItems();
   updateCartUI();
   document.getElementById("cartPanel").classList.add("open");
   document.getElementById("overlay").classList.add("show");
 }
 
-function closeCart(){
+window.closeCart = function(){
   document.getElementById("cartPanel").classList.remove("open");
   document.getElementById("overlay").classList.remove("show");
 }
 
-async function sendOrder(){
+window.sendOrder = async function(){
   if(sending) return;
   const items=Object.values(cart);
   if(!items.length){ alert("Sepetiniz boş!"); return; }
@@ -730,13 +736,13 @@ async function sendOrder(){
   updateCartUI();
 }
 
-function closeThank(){
+window.closeThank = function(){
   document.getElementById("thankModal").classList.remove("show");
 }
 
 let zScale=1, zStartDist=0, zLastScale=1;
 
-function openZoom(src){
+window.openZoom = function(src){
   const el=document.getElementById("zoomImg");
   el.src=src;
   zScale=1; el.style.transform="scale(1)";
@@ -744,7 +750,7 @@ function openZoom(src){
   document.body.style.overflow="hidden";
 }
 
-function closeZoom(){
+window.closeZoom = function(){
   document.getElementById("zoomModal").classList.remove("show");
   document.body.style.overflow="";
   zScale=1;
@@ -762,18 +768,4 @@ document.addEventListener("DOMContentLoaded",()=>{
     if(e.touches.length===2){ zStartDist=getDist(e.touches); zLastScale=zScale; }
   });
   el.addEventListener("touchmove",(e)=>{
-    if(e.touches.length===2){
-      e.preventDefault();
-      const nd=getDist(e.touches);
-      zScale=Math.max(1,Math.min(zLastScale*(nd/zStartDist),8));
-      el.style.transform=`scale(${zScale})`;
-    }
-  });
-});
-
-loadData();
-setInterval(loadData, 30000);
-
-</script>
-</body>
-</html>
+    if(e.touches.le
