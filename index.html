@@ -569,7 +569,7 @@ function renderGrid(){
           <div class="productPrice">${p.fiyat}₺</div>
           <div class="qtyControl">
             <div class="qBtn ${qty>0?'active':''}" onclick="minus('${id}')">−</div>
-            <div class="qNum" id="qnum-${id}">${qty}</div>
+            <input type="number" min="0" id="qnum-${id}" value="${qty}" class="qNum" style="width:36px;border:none;background:transparent;font-family:'DM Sans',sans-serif;" onchange="setQty('${id}','${p.ad}',${p.fiyat},'${p.resim||""}','${p.category}',this.value)">
             <div class="qBtn active" onclick="plus('${id}','${p.ad}',${p.fiyat},'${p.resim||''}','${p.category}')">+</div>
           </div>
         </div>
@@ -589,6 +589,17 @@ function minus(id){
   if(!cart[id]) return;
   cart[id].qty--;
   if(cart[id].qty<=0) delete cart[id];
+  updateCartUI();
+  renderGrid();
+}
+
+function setQty(id,ad,fiyat,resim,category,val){
+  const qty=parseInt(val)||0;
+  if(qty<=0){ delete cart[id]; }
+  else {
+    if(!cart[id]) cart[id]={id,ad,fiyat,resim,category,qty:0};
+    cart[id].qty=qty;
+  }
   updateCartUI();
   renderGrid();
 }
