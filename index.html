@@ -342,7 +342,6 @@ body{
   color:#fff;
 }
 .grid{ padding-bottom:80px; }
-
 .thankModal{
   display:none;
   position:fixed;
@@ -559,20 +558,56 @@ function renderGrid(){
   }
   document.getElementById("grid").innerHTML=filtered.map(p=>{
     const id=p.id||p.ad;
-    const qty=cart[id]?cart[id].qty:0;
+    const renk1=p.renk1||"";
+    const renk2=p.renk2||"";
+
+    var varyantHTML="";
+    if(renk1||renk2){
+      // Renkli varyant modu
+      if(renk1){
+        const vid=id+"__"+renk1;
+        const vqty=cart[vid]?cart[vid].qty:0;
+        varyantHTML+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">
+          <span style="font-size:11px;font-weight:600;color:var(--gray);">${renk1}</span>
+          <div class="qtyControl">
+            <div class="qBtn ${vqty>0?'active':''}" onclick="minus('${vid}')">−</div>
+            <input type="number" min="0" id="qnum-${vid}" value="${vqty}" class="qNum" style="width:36px;border:none;background:transparent;font-family:'DM Sans',sans-serif;" onchange="setQty('${vid}','${p.ad} - ${renk1}',${p.fiyat},'${p.resim||""}','${p.category}',this.value)">
+            <div class="qBtn active" onclick="plus('${vid}','${p.ad} - ${renk1}',${p.fiyat},'${p.resim||""}','${p.category}')">+</div>
+          </div>
+        </div>`;
+      }
+      if(renk2){
+        const vid=id+"__"+renk2;
+        const vqty=cart[vid]?cart[vid].qty:0;
+        varyantHTML+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">
+          <span style="font-size:11px;font-weight:600;color:var(--gray);">${renk2}</span>
+          <div class="qtyControl">
+            <div class="qBtn ${vqty>0?'active':''}" onclick="minus('${vid}')">−</div>
+            <input type="number" min="0" id="qnum-${vid}" value="${vqty}" class="qNum" style="width:36px;border:none;background:transparent;font-family:'DM Sans',sans-serif;" onchange="setQty('${vid}','${p.ad} - ${renk2}',${p.fiyat},'${p.resim||""}','${p.category}',this.value)">
+            <div class="qBtn active" onclick="plus('${vid}','${p.ad} - ${renk2}',${p.fiyat},'${p.resim||""}','${p.category}')">+</div>
+          </div>
+        </div>`;
+      }
+    } else {
+      // Normal tek renk modu
+      const qty=cart[id]?cart[id].qty:0;
+      varyantHTML=`<div class="productBottom">
+          <div class="productPrice">${p.fiyat}₺</div>
+          <div class="qtyControl">
+            <div class="qBtn ${qty>0?'active':''}" onclick="minus('${id}')">−</div>
+            <input type="number" min="0" id="qnum-${id}" value="${qty}" class="qNum" style="width:36px;border:none;background:transparent;font-family:'DM Sans',sans-serif;" onchange="setQty('${id}','${p.ad}',${p.fiyat},'${p.resim||""}','${p.category}',this.value)">
+            <div class="qBtn active" onclick="plus('${id}','${p.ad}',${p.fiyat},'${p.resim||""}','${p.category}')">+</div>
+          </div>
+        </div>`;
+    }
+
     return `<div class="productCard">
       <img class="productImg" src="${img(p.resim)}" onclick="openZoom('${img(p.resim)}')">
       <div class="productInfo">
         <div class="productName">${p.ad}</div>
         <div class="productCat">${p.category}</div>
-        <div class="productBottom">
-          <div class="productPrice">${p.fiyat}₺</div>
-          <div class="qtyControl">
-            <div class="qBtn ${qty>0?'active':''}" onclick="minus('${id}')">−</div>
-            <input type="number" min="0" id="qnum-${id}" value="${qty}" class="qNum" style="width:36px;border:none;background:transparent;font-family:'DM Sans',sans-serif;" onchange="setQty('${id}','${p.ad}',${p.fiyat},'${p.resim||""}','${p.category}',this.value)">
-            <div class="qBtn active" onclick="plus('${id}','${p.ad}',${p.fiyat},'${p.resim||''}','${p.category}')">+</div>
-          </div>
-        </div>
+        ${renk1||renk2 ? `<div class="productPrice">${p.fiyat}₺</div>` : ""}
+        ${varyantHTML}
       </div>
     </div>`;
   }).join("");
@@ -685,7 +720,7 @@ async function sendOrder(){
   [["isim",isim],["telefon",telefon],["adres",adres]].forEach(([id,val])=>{
     const el=document.getElementById(id);
     if(!val){ el.classList.add("error"); valid=false; }
-    else el.classList.remove("error");
+  else el.classList.remove("error");
   });
   if(!valid){ alert("Lütfen tüm alanları doldurun!"); return; }
 
