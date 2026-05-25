@@ -499,23 +499,21 @@ body{
   <img id="zoomImg" onclick="event.stopPropagation()">
 </div>
 
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, push, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script>
 
 const firebaseConfig = {
   apiKey: "AIzaSyBK4mibwFjSlrL7k-omOPn7oDZQVExYgJE",
   authDomain: "gazi-taki.firebaseapp.com",
-  databaseURL: "https://gazi-taki-default-rtdb.firebaseio.com",
   projectId: "gazi-taki",
   storageBucket: "gazi-taki.firebasestorage.app",
   messagingSenderId: "17296440633",
   appId: "1:17296440633:web:2e5d897bc212a0ffa97ce8"
 };
 
-const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 let products  = [];
 let activeCat = "all";
@@ -534,20 +532,16 @@ function img(url){
 
 async function loadData(){
   try{
-    const snapshot = await get(ref(db, "products"));
-    const val = snapshot.val();
-    if(val){
-      // Firebase obje olarak döner, diziye çevir
-      products = Array.isArray(val) ? val : Object.values(val);
-    } else {
-      products = [];
-    }
+    const snapshot = await db.collection("products").get();
+    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Sadece aktif ürünleri göster
+    products = products.filter(p => p.aktif !== false);
     renderGrid();
   }catch(e){ console.error("Veri yüklenemedi:", e); }
 }
 
 async function saveOrder(order){
-  await push(ref(db, "orders"), order);
+  await db.collection("orders").add(order);
 }
 
 function filterCat(cat,el){
@@ -584,14 +578,14 @@ function renderGrid(){
   }).join("");
 }
 
-window.plus = function(id,ad,fiyat,resim,category){
+function plus(id,ad,fiyat,resim,category){
   if(!cart[id]) cart[id]={id,ad,fiyat,resim,category,qty:0};
   cart[id].qty++;
   updateCartUI();
   renderGrid();
 }
 
-window.minus = function(id){
+function minus(id){
   if(!cart[id]) return;
   cart[id].qty--;
   if(cart[id].qty<=0) delete cart[id];
@@ -599,7 +593,7 @@ window.minus = function(id){
   renderGrid();
 }
 
-window.removeItem = function(id){
+function removeItem(id){
   delete cart[id];
   updateCartUI();
   renderGrid();
@@ -648,19 +642,19 @@ function renderCartItems(){
     </div>`).join("");
 }
 
-window.openCart = function(){
+function openCart(){
   renderCartItems();
   updateCartUI();
   document.getElementById("cartPanel").classList.add("open");
   document.getElementById("overlay").classList.add("show");
 }
 
-window.closeCart = function(){
+function closeCart(){
   document.getElementById("cartPanel").classList.remove("open");
   document.getElementById("overlay").classList.remove("show");
 }
 
-window.sendOrder = async function(){
+async function sendOrder(){
   if(sending) return;
   const items=Object.values(cart);
   if(!items.length){ alert("Sepetiniz boş!"); return; }
@@ -736,13 +730,13 @@ window.sendOrder = async function(){
   updateCartUI();
 }
 
-window.closeThank = function(){
+function closeThank(){
   document.getElementById("thankModal").classList.remove("show");
 }
 
 let zScale=1, zStartDist=0, zLastScale=1;
 
-window.openZoom = function(src){
+function openZoom(src){
   const el=document.getElementById("zoomImg");
   el.src=src;
   zScale=1; el.style.transform="scale(1)";
@@ -750,7 +744,7 @@ window.openZoom = function(src){
   document.body.style.overflow="hidden";
 }
 
-window.closeZoom = function(){
+function closeZoom(){
   document.getElementById("zoomModal").classList.remove("show");
   document.body.style.overflow="";
   zScale=1;
@@ -779,7 +773,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 loadData();
 setInterval(loadData, 30000);
-  
+
 </script>
 </body>
 </html>
