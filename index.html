@@ -768,4 +768,18 @@ document.addEventListener("DOMContentLoaded",()=>{
     if(e.touches.length===2){ zStartDist=getDist(e.touches); zLastScale=zScale; }
   });
   el.addEventListener("touchmove",(e)=>{
-    if(e.touches.le
+    if(e.touches.length===2){
+      e.preventDefault();
+      const nd=getDist(e.touches);
+      zScale=Math.max(1,Math.min(zLastScale*(nd/zStartDist),8));
+      el.style.transform=`scale(${zScale})`;
+    }
+  });
+});
+
+loadData();
+setInterval(loadData, 30000);
+  
+</script>
+</body>
+</html>
