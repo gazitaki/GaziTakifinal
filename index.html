@@ -578,9 +578,13 @@ function renderGrid(){
   }).join("");
 }
 
+function saveCart(){ try{ localStorage.setItem("gaziCart", JSON.stringify(cart)); }catch(e){} }
+function loadCart(){ try{ var s=localStorage.getItem("gaziCart"); if(s) cart=JSON.parse(s); }catch(e){} }
+
 function plus(id,ad,fiyat,resim,category){
   if(!cart[id]) cart[id]={id,ad,fiyat,resim,category,qty:0};
   cart[id].qty++;
+  saveCart();
   updateCartUI();
   renderGrid();
 }
@@ -589,6 +593,7 @@ function minus(id){
   if(!cart[id]) return;
   cart[id].qty--;
   if(cart[id].qty<=0) delete cart[id];
+  saveCart();
   updateCartUI();
   renderGrid();
 }
@@ -600,12 +605,14 @@ function setQty(id,ad,fiyat,resim,category,val){
     if(!cart[id]) cart[id]={id,ad,fiyat,resim,category,qty:0};
     cart[id].qty=qty;
   }
+  saveCart();
   updateCartUI();
   renderGrid();
 }
 
 function removeItem(id){
   delete cart[id];
+  saveCart();
   updateCartUI();
   renderGrid();
   renderCartItems();
@@ -731,6 +738,7 @@ async function sendOrder(){
   },1500);
 
   cart={};
+  saveCart();
   sending=false;
   btn.disabled=false;
   btn.innerText="📦 Siparişi Gönder";
@@ -782,6 +790,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
 });
 
+loadCart();
 loadData();
 setInterval(loadData, 30000);
 
