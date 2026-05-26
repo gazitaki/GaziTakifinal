@@ -342,6 +342,7 @@ body{
   color:#fff;
 }
 .grid{ padding-bottom:80px; }
+
 .thankModal{
   display:none;
   position:fixed;
@@ -438,14 +439,21 @@ body{
   </button>
 </div>
 
-<div class="cats">
-  <div class="cat active" onclick="filterCat('all',this)">Tümü</div>
-  <div class="cat" onclick="filterCat('Küpe',this)">Küpe</div>
+<div class="cats" id="catsRow">
+  <div class="cat active" onclick="filterCat('Küpe',this)">Küpe</div>
   <div class="cat" onclick="filterCat('Kolye',this)">Kolye</div>
   <div class="cat" onclick="filterCat('Bileklik',this)">Bileklik</div>
   <div class="cat" onclick="filterCat('Xuping',this)">Xuping</div>
   <div class="cat" onclick="filterCat('CM',this)">CM</div>
   <div class="cat" onclick="filterCat('VIP',this)">VIP</div>
+</div>
+<div style="display:flex;justify-content:flex-end;padding:6px 16px;background:var(--bg2);border-bottom:1px solid var(--border);position:relative;">
+  <div id="sortBtn" onclick="toggleSort(event)" style="padding:5px 12px;border-radius:20px;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--white);cursor:pointer;background:var(--bg);display:flex;align-items:center;gap:4px;">↕ Sırala</div>
+  <div id="sortPanel" style="display:none;position:absolute;top:36px;right:16px;background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;z-index:200;min-width:160px;box-shadow:0 4px 16px rgba(0,0,0,.1);">
+    <div class="sortOption active" onclick="setSort('az',this)" style="padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:1px solid var(--border);color:var(--gold);">🔤 A-Z</div>
+    <div class="sortOption" onclick="setSort('asc',this)" style="padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:1px solid var(--border);">⬆️ Fiyat Artan</div>
+    <div class="sortOption" onclick="setSort('desc',this)" style="padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;">⬇️ Fiyat Azalan</div>
+  </div>
 </div>
 
 <div class="grid" id="grid"></div>
@@ -515,7 +523,8 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let products  = [];
-let activeCat = "all";
+let activeCat = "Küpe";
+let activeSort = "az";
 let cart      = {};
 let sending   = false;
 
@@ -550,8 +559,27 @@ function filterCat(cat,el){
   renderGrid();
 }
 
+function toggleSort(e){
+  e.stopPropagation();
+  var panel=document.getElementById("sortPanel");
+  panel.style.display=panel.style.display==="block"?"none":"block";
+}
+
+function setSort(type,el){
+  activeSort=type;
+  document.querySelectorAll(".sortOption").forEach(o=>{ o.style.color=o.style.fontWeight=""; });
+  el.style.color="var(--gold)"; el.style.fontWeight="700";
+  document.getElementById("sortPanel").style.display="none";
+  renderGrid();
+}
+
+document.addEventListener("click",function(){ document.getElementById("sortPanel").style.display="none"; });
+
 function renderGrid(){
-  const filtered=products.filter(p=>activeCat==="all"||p.category===activeCat);
+  let filtered=products.filter(p=>activeCat==="all"||p.category===activeCat);
+  if(activeSort==="az") filtered.sort((a,b)=>a.ad.localeCompare(b.ad,"tr"));
+  else if(activeSort==="asc") filtered.sort((a,b)=>a.fiyat-b.fiyat);
+  else if(activeSort==="desc") filtered.sort((a,b)=>b.fiyat-a.fiyat);
   if(!filtered.length){
     document.getElementById("grid").innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray)">Bu kategoride ürün yok</div>`;
     return;
@@ -720,7 +748,7 @@ async function sendOrder(){
   [["isim",isim],["telefon",telefon],["adres",adres]].forEach(([id,val])=>{
     const el=document.getElementById(id);
     if(!val){ el.classList.add("error"); valid=false; }
-  else el.classList.remove("error");
+    else el.classList.remove("error");
   });
   if(!valid){ alert("Lütfen tüm alanları doldurun!"); return; }
 
