@@ -2,25 +2,29 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Gazi Takı Admin Panel</title>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<!-- PDF Oluşturucu Kütüphane -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-body{ font-family:Arial, sans-serif; background:#111; color:white; margin:0; padding:12px; box-sizing:border-box; }
-.card{ background:#222; padding:12px; margin-bottom:12px; border-radius:12px; box-sizing:border-box; }
-input,select,button{ width:100%; padding:10px; margin-top:6px; border:none; border-radius:8px; box-sizing:border-box; font-size:14px; }
+body{ font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#111; color:white; margin:0; padding:12px; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+.card{ background:#222; padding:12px; margin-bottom:12px; border-radius:12px; box-sizing:border-box; border:1px solid #333; }
+input,select,button{ width:100%; padding:11px; margin-top:6px; border:none; border-radius:8px; box-sizing:border-box; font-size:14px; background:#2a2a2a; color:white; }
+input:focus, select:focus{ outline:1px solid #00b894; }
 button{ cursor:pointer; font-weight:bold; }
 .primary{ background:#00b894; color:white; }
+.primary:active{ transform:scale(0.98); }
 .deleteBtn{ background:#d63031; color:white; margin-top:5px; }
 .passiveBtn{ background:#e17055; color:white; margin-top:5px; }
 .iptalBtn{ background:#636e72; color:white; margin-top:8px; padding:10px; border-radius:8px; font-weight:bold; width:100%; border:none; cursor:pointer; font-size:14px; }
 
 .stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:15px; }
-.statBox{ background:#1c1c1c; padding:12px 6px; border-radius:12px; text-align:center; font-size:12px; font-weight:bold; position:relative; }
-.statBox b{ display:block; font-size:16px; margin-top:5px; color:#00d084; }
+.statBox{ background:#1c1c1c; padding:12px 4px; border-radius:12px; text-align:center; font-size:11px; font-weight:bold; position:relative; border:1px solid #222; }
+.statBox b{ display:block; font-size:15px; margin-top:5px; color:#00d084; }
 
 .filterIcon{ position:absolute; top:4px; right:4px; background:#333; border:none; color:white; width:20px; height:20px; border-radius:4px; cursor:pointer; font-size:10px; display:flex; align-items:center; justify-content:center; }
 .filterPanel{ display:none; position:absolute; top:30px; right:0; background:#222; border:1px solid #333; border-radius:10px; overflow:hidden; z-index:100; min-width:120px; box-shadow:0 4px 15px rgba(0,0,0,.5); }
@@ -32,7 +36,7 @@ button{ cursor:pointer; font-weight:bold; }
 .filterLabel{ font-size:9px; color:#888; margin-top:2px; display:block; }
 
 #products{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
-.productImage{ width:100%; height:130px; object-fit:cover; border-radius:10px; background:#333; cursor:pointer; }
+.productImage{ width:100%; height:130px; object-fit:cover; border-radius:10px; background:#333; cursor:pointer; display:block; }
 .productImage.pasif-img{ opacity:0.4; filter:grayscale(100%); }
 
 .orderItem{ display:flex; gap:10px; align-items:center; background:#1a1a1a; padding:8px; border-radius:10px; margin-top:6px; }
@@ -41,6 +45,7 @@ button{ cursor:pointer; font-weight:bold; }
 .nextBtn{ margin-top:8px; padding:10px; border-radius:8px; font-weight:bold; border:none; cursor:pointer; width:100%; font-size:13px; }
 .nextBtn-yeni{ background:linear-gradient(90deg,#f39c12,#e67e22); color:white; }
 .nextBtn-odeme{ background:linear-gradient(90deg,#2980b9,#3498db); color:white; }
+.pdfBtn{ background:linear-gradient(90deg,#6c5ce7,#a29bfe); color:white; margin-top:8px; padding:10px; border-radius:8px; font-weight:bold; width:100%; border:none; cursor:pointer; font-size:13px; }
 .waBtn{ background:#25d366; color:white; margin-top:8px; display:block; text-align:center; text-decoration:none; padding:10px; border-radius:8px; font-weight:bold; font-size:13px; box-sizing:border-box; }
 
 .bolumBaslik{ background:#1c1c1c; padding:12px; border-radius:10px; margin-bottom:6px; font-size:14px; font-weight:bold; border-left:4px solid #00b894; cursor:pointer; display:flex; align-items:center; justify-content:space-between; user-select:none; }
@@ -54,6 +59,10 @@ button{ cursor:pointer; font-weight:bold; }
 
 #loginPage{ max-width:400px; margin:60px auto; padding:20px; }
 #adminContent{ display:none; }
+
+.catManagerGrid { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 6px; align-items: center; background: #1a1a1a; padding: 6px 10px; border-radius: 8px; }
+.catManagerGrid span { font-size: 13px; font-weight: bold; }
+.catMiniDel { background: #d63031; color: white; border: none; padding: 4px 8px; border-radius: 6px; font-size: 11px; width: auto; margin: 0; cursor: pointer; }
 
 /* ZOOM */
 .zoomModal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.95); z-index:999; justify-content:center; align-items:center; }
@@ -71,8 +80,8 @@ button{ cursor:pointer; font-weight:bold; }
 
 <div id="loginPage" class="card">
   <h2 style="text-align:center;color:#00b894;margin-top:0;">🔐 Gazi Takı Giriş</h2>
-  <input id="loginEmail" type="email" placeholder="E-posta adresiniz">
-  <input id="loginPassword" type="password" placeholder="Şifreniz">
+  <input id="loginEmail" type="email" placeholder="E-posta adresiniz" style="background:#2a2a2a">
+  <input id="loginPassword" type="password" placeholder="Şifreniz" style="background:#2a2a2a">
   <button class="primary" style="margin-top:15px;" onclick="loginAdmin()">GİRİŞ YAP</button>
   <p id="loginError" style="color:#d63031;font-size:13px;font-weight:bold;text-align:center;margin-top:10px;"></p>
 </div>
@@ -100,7 +109,7 @@ button{ cursor:pointer; font-weight:bold; }
   </div>
 
   <div class="card" style="padding:4px;margin-bottom:12px;">
-    <input id="searchOrder" placeholder="👤 Müşteri adı veya 📞 tel no ile ara..." oninput="render()">
+    <input id="searchOrder" placeholder="👤 Müşteri adı veya 📞 tel no ile ara..." oninput="render()" style="background:#2a2a2a;margin:0;">
   </div>
 
   <div class="bolumBaslik" style="border-left-color:#e17055" onclick="goBolum('yeni')">🟠 Yeni Siparişler <span class="countBadge" id="count-yeni">0</span></div>
@@ -118,17 +127,22 @@ button{ cursor:pointer; font-weight:bold; }
   <div class="bolumBaslik" style="border-left-color:#00b894" onclick="goBolum('arsiv')">📁 Arşiv <span class="countBadge" id="count-arsiv">0</span></div>
   <div class="bolumIcerik" id="body-arsiv"></div>
 
+  <div class="bolumBaslik" style="border-left-color:#6c5ce7" onclick="goBolum('kategoriYonetim')">🛠 Kategorileri Yönet <span class="countBadge" id="count-kategoriList">0</span></div>
+  <div class="bolumIcerik" id="body-kategoriYonetim">
+    <div class="card">
+      <h3>📁 Yeni Kategori Ekle</h3>
+      <input id="yeniKategoriAd" placeholder="Kategori adı (Örn: Şahmeran)">
+      <button class="primary" onclick="addCategory()">➕ KATEGORİ EKLE</button>
+      <div id="adminCategoryList" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
   <div class="card">
     <h3>📦 Ürün Ekle</h3>
     <input id="ad" placeholder="Ürün adı">
     <input id="fiyat" type="number" placeholder="Fiyat">
     <input id="resim" placeholder="Resim link">
-    <select id="kategori">
-      <option value="Bileklik">Bileklik</option>
-      <option value="Küpe">Küpe</option>
-      <option value="Kolye">Kolye</option>
-      <option value="Xuping">Xuping</option>
-    </select>
+    <select id="kategori"><option value="">Kategoriler Yükleniyor...</option></select>
     <button class="primary" onclick="addProduct()">➕ EKLE</button>
   </div>
 
@@ -137,7 +151,6 @@ button{ cursor:pointer; font-weight:bold; }
     <div id="products"></div>
   </div>
 </div>
-
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBK4mibwFjSlrL7k-omOPn7oDZQVExYgJE",
@@ -154,11 +167,13 @@ const db = firebase.firestore();
 
 let products = [];
 let allOrders = [];
+let categories = [];
 let activeFilter = "hafta";
 
-// id'leri güvenli saklamak için map
 const orderMap = {};
 const productMap = {};
+
+const DEFAULT_IMG = "https://via.placeholder.com/300?text=Gazi+Taki";
 
 auth.onAuthStateChanged(user => {
   if(user){
@@ -182,11 +197,18 @@ function loginAdmin(){
 function logoutAdmin(){ auth.signOut(); }
 
 function startListeners(){
+  db.collection("categories").orderBy("name", "asc").onSnapshot(snap => {
+    categories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    updateCategorySelects();
+    render();
+  });
+
   db.collection("products").onSnapshot(snap => {
     products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     products.forEach(p => { productMap[p.id] = p; });
     render();
   });
+
   db.collection("orders").orderBy("date","desc").onSnapshot(snap => {
     allOrders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     allOrders.forEach(o => { orderMap[o.id] = o; });
@@ -194,9 +216,31 @@ function startListeners(){
   });
 }
 
-// ZOOM
+function updateCategorySelects() {
+  const select = document.getElementById("kategori");
+  if (!select) return;
+  if (categories.length === 0) {
+    select.innerHTML = '<option value="">Önce Kategori Ekleyin</option>';
+    return;
+  }
+  select.innerHTML = categories.map(c => `<option value="${c.name}">${c.name}</option>`).join("");
+}
+
+function addCategory() {
+  const input = document.getElementById("yeniKategoriAd");
+  const nameV = input.value.trim();
+  if (!nameV) { alert("Lütfen bir kategori adı girin!"); return; }
+  db.collection("categories").add({ name: nameV }).then(() => { input.value = ""; }).catch(e => alert("Hata: " + e.message));
+}
+
+function deleteCategory(id) {
+  if (confirm("Bu kategoriyi silmek istediğinize emin misiniz?")) {
+    db.collection("categories").doc(id).delete().catch(e => alert("Hata: " + e.message));
+  }
+}
+
 function openZoom(src){
-  document.getElementById("zoomImg").src = src;
+  document.getElementById("zoomImg").src = src || DEFAULT_IMG;
   document.getElementById("zoomModal").classList.add("show");
   document.body.style.overflow = "hidden";
 }
@@ -205,7 +249,6 @@ function closeZoom(){
   document.body.style.overflow = "";
 }
 
-// FİLTRE
 function getRange(f){
   const now = new Date();
   if(f==="hafta"){
@@ -218,6 +261,7 @@ function getRange(f){
   if(f==="yillik") return {start:new Date(now.getFullYear(),0,1),end:new Date(now.getFullYear()+1,0,1)};
   return null;
 }
+
 function calcMoney(){
   const range=getRange(activeFilter);
   let t=0;
@@ -228,10 +272,12 @@ function calcMoney(){
   });
   return t;
 }
+
 function toggleFilter(e){
   e.stopPropagation();
   document.getElementById("filterPanel").classList.toggle("show");
 }
+
 function setFilter(key,label,el){
   activeFilter=key;
   document.getElementById("filterLabel").innerText=label;
@@ -242,8 +288,9 @@ function setFilter(key,label,el){
 document.addEventListener("click",()=>{ document.getElementById("filterPanel")?.classList.remove("show"); });
 
 function goBolum(key){
-  ["yeni","odeme","kargo","iptal","arsiv","urunler"].forEach(k=>{
-    document.getElementById("body-"+k).classList.toggle("show",k===key);
+  ["yeni","odeme","kargo","iptal","arsiv","urunler","kategoriYonetim"].forEach(k=>{
+    const el = document.getElementById("body-"+k);
+    if(el) el.classList.toggle("show",k===key);
   });
 }
 
@@ -254,17 +301,18 @@ function calcTotal(order){
 }
 
 function waLink(tel,msg){
-  const n=tel.replace(/\D/g,"");
-  return "https://wa.me/"+(n.startsWith("90")?n:"90"+n)+"?text="+encodeURIComponent(msg);
+  let n = tel.replace(/\D/g,"");
+  if(n.startsWith("0")) n = n.substring(1);
+  if(!n.startsWith("90")) n = "90" + n;
+  return "https://wa.me/"+n+"?text="+encodeURIComponent(msg);
 }
 
-// ÜRÜN İŞLEMLERİ
 function addProduct(){
   const adV=document.getElementById("ad").value.trim();
   const fiyatV=document.getElementById("fiyat").value.trim();
   const resimV=document.getElementById("resim").value.trim();
   const katV=document.getElementById("kategori").value;
-  if(!adV||!fiyatV){ alert("Ad ve Fiyat giriniz!"); return; }
+  if(!adV||!fiyatV||!katV){ alert("Ad, Fiyat ve Kategori seçimi zorunludur!"); return; }
   db.collection("products").add({ ad:adV, fiyat:parseFloat(fiyatV), resim:resimV, category:katV, aktif:true });
   document.getElementById("ad").value="";
   document.getElementById("fiyat").value="";
@@ -280,10 +328,9 @@ function toggleProductStatus(idx){
 function deleteProduct(idx){
   const p = products[idx];
   if(!p) return;
-  if(confirm("Silinsin mi?")) db.collection("products").doc(p.id).delete();
+  if(confirm("Bu ürünü silmek istediğinize emin misiniz?")) db.collection("products").doc(p.id).delete();
 }
 
-// SİPARİŞ İŞLEMLERİ
 function nextStatus(idx){
   const o = allOrders[idx];
   if(!o) return;
@@ -298,19 +345,84 @@ function nextStatus(idx){
 function iptalEt(idx){
   const o = allOrders[idx];
   if(!o) return;
-  if(confirm("İptal edilsin mi?")){
+  if(confirm("Sipariş iptal edilsin mi?")){
     db.collection("orders").doc(o.id).update({ status:"iptal", iptalTarihi:new Date().toLocaleDateString("tr-TR") });
   }
 }
 
-function printOrder(idx){
+// Akıllı Görsel PDF Oluşturucu Fonksiyonu
+function generateOrderPDF(idx) {
   const o = allOrders[idx];
-  if(!o) return;
-  const win = window.open("","_blank");
-  let html=`<h2>GAZİ TAKI SİPARİŞ</h2><hr>Müşteri: ${o.customer?.isim}<br>Tel: ${o.customer?.telefon}<br>Adres: ${o.customer?.adres}<br><hr>`;
-  o.items?.forEach(it=>{ html+=`<div>${it.ad} - ${it.qty} Adet - ${it.fiyat}₺</div>`; });
-  html+=`<hr><h3>Toplam: ${calcTotal(o)}₺</h3><script>window.print();<\/script>`;
-  win.document.write(html); win.document.close();
+  if (!o) return;
+  
+  const total = calcTotal(o);
+  const printDefaultImg = "https://via.placeholder.com/150?text=Gazi+Taki";
+  
+  // PDF için sanal bir konteyner oluşturuyoruz (Ekranda çirkinlik yaratmaz)
+  const element = document.createElement('div');
+  element.style.padding = '20px';
+  element.style.background = '#ffffff';
+  element.style.color = '#111111';
+  element.style.fontFamily = 'Arial, sans-serif';
+  
+  let html = `
+    <div style="max-width: 600px; margin: 0 auto; border: 2px solid #333; border-radius: 12px; padding: 20px; background: #fff;">
+      <div style="text-align: center; margin-bottom: 20px; border-bottom: 3px double #333; padding-bottom: 12px;">
+        <h2 style="margin: 0; font-size: 26px; font-weight: 900; color: #000; letter-spacing: 1px;">GAZİ TAKI</h2>
+        <p style="margin: 5px 0 0 0; font-size: 13px; color: #444; font-weight: bold; text-transform: uppercase;">📋 SİPARİŞ HAZIRLAMA VE PAKETLEME FİŞİ</p>
+      </div>
+      
+      <table style="width: 100%; margin-bottom: 20px; border-collapse: collapse; background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+        <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #555; width: 110px; font-size: 11px; text-transform: uppercase;">Sipariş ID:</td><td style="padding: 10px; border-bottom: 1px solid #eee; font-family: monospace; font-weight: bold;">${o.id || ""}</td></tr>
+        <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #555; font-size: 11px; text-transform: uppercase;">Müşteri:</td><td style="padding: 10px; border-bottom: 1px solid #eee; font-size: 15px; font-weight: bold;">${o.customer?.isim || ""}</td></tr>
+        <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #555; font-size: 11px; text-transform: uppercase;">Telefon:</td><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">${o.customer?.telefon || ""}</td></tr>
+        <tr><td style="padding: 10px; font-weight: bold; color: #555; font-size: 11px; text-transform: uppercase;">Kargo Adresi:</td><td style="padding: 10px; white-space: pre-wrap; font-weight: 500; line-height: 1.4;">${o.customer?.adres || ""}</td></tr>
+      </table>
+      
+      <div style="font-weight: 800; font-size: 15px; margin-bottom: 10px; color: #000; text-transform: uppercase; border-left: 4px solid #111; padding-left: 8px;">Hazırlanacak Ürünler</div>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+          <tr style="border-bottom: 2px solid #111;">
+            <th style="text-align: left; font-size: 11px; color: #444; padding: 8px 5px; text-transform: uppercase; width: 90px;">Görsel</th>
+            <th style="text-align: left; font-size: 11px; color: #444; padding: 8px 5px; text-transform: uppercase;">Ürün Bilgisi</th>
+            <th style="text-align: center; font-size: 11px; color: #444; padding: 8px 5px; text-transform: uppercase; width: 80px;">Adet</th>
+            <th style="text-align: right; font-size: 11px; color: #444; padding: 8px 5px; text-transform: uppercase; width: 90px;">Fiyat</th>
+          </tr>
+        </thead>
+        <tbody>`;
+        
+        o.items?.forEach(it => {
+          const src = it.resim || printDefaultImg;
+          html += `
+            <tr style="border-bottom: 1px solid #ddd;">
+              <td style="padding: 10px 5px;"><img src="${src}" style="width: 75px; height: 75px; object-fit: cover; border-radius: 8px; border: 1px solid #ccc; display: block;" onerror="this.src='${printDefaultImg}'"></td>
+              <td style="padding: 10px 5px; vertical-align: middle;"><span style="font-weight: bold; font-size: 14px; color: #000;">${it.ad}</span></td>
+              <td style="padding: 10px 5px; vertical-align: middle; text-align: center;"><span style="font-size: 16px; font-weight: 900; color: #000; background: #e0e0e0; padding: 4px 10px; border-radius: 6px; border: 1px solid #bbb; display: inline-block;">${it.qty}</span></td>
+              <td style="padding: 10px 5px; vertical-align: middle; text-align: right; font-weight: bold;">${it.fiyat} ₺</td>
+            </tr>`;
+        });
+        
+  html += `
+        </tbody>
+      </table>
+      
+      <div style="text-align: right; margin-top: 15px; padding-top: 12px; border-top: 3px solid #111; font-size: 18px; font-weight: 900; color: #000;">TOPLAM TUTAR: ${total} ₺</div>
+      <div style="text-align: center; margin-top: 25px; font-size: 11px; color: #666; font-weight: bold; border-top: 1px dashed #ccc; padding-top: 10px;">⚠️ Lütfen paketlemeden önce ürün görsellerini ve adetleri elinizdeki ürünle son kez eşleştiriniz!</div>
+    </div>`;
+    
+  element.innerHTML = html;
+
+  // html2pdf Ayarları
+  const opt = {
+    margin:       [10, 10, 10, 10],
+    filename:     `GaziTaki-Siparis-${o.customer?.isim?.replace(/\s+/g, '_') || o.id}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, logging: false },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  // PDF üretme ve indirme tetikleyici
+  html2pdf().set(opt).from(element).save();
 }
 
 function buildCard(order, idx){
@@ -325,15 +437,15 @@ function buildCard(order, idx){
     <hr>`;
 
   order.items?.forEach(it=>{
-    const src=it.resim||"https://via.placeholder.com/60";
+    const src=it.resim||DEFAULT_IMG;
     html+=`<div class="orderItem">
-      <img src="${src}" onclick="openZoom('${src.replace(/'/g,"\\'")}')">
+      <img src="${src}" onerror="this.src='${DEFAULT_IMG}'" onclick="openZoom('${src.replace(/'/g,"\\'")}')">
       <div><b>${it.ad}</b><br>${it.qty} adet x ${it.fiyat}₺</div>
     </div>`;
   });
 
-  const waOdeme=waLink(tel,`Merhaba ${isim}, siparişiniz hazırlandı 🛍️\nÖdeme bekliyoruz.\nToplam: ${total}₺`);
-  const waKargo=waLink(tel,`Merhaba ${isim}, siparişiniz kargoya verildi! 📦`);
+  const waOdeme=waLink(tel,`Merhaba ${isim}, Gazi Takı siparişiniz hazırlandı 🛍️\nÖdeme bekliyoruz.\nToplam: ${total}₺`);
+  const waKargo=waLink(tel,`Merhaba ${isim}, Gazi Takı siparişiniz kargoya verildi! 📦`);
 
   let nextBtn="", waBtn="";
   if(status==="yeni"){
@@ -350,7 +462,7 @@ function buildCard(order, idx){
 
   html+=`<hr><b>💰 TOPLAM: ${total}₺</b>
     ${nextBtn}${waBtn}
-    <button onclick="printOrder(${idx})" style="margin-top:6px;background:#444;color:white;">🖨 Yazdır</button>
+    <button class="pdfBtn" onclick="generateOrderPDF(${idx})">📄 PDF Olarak İndir / Paylaş</button>
     <button class="iptalBtn" onclick="iptalEt(${idx})">❌ İptal Et</button>
   </div>`;
   return html;
@@ -359,19 +471,28 @@ function buildCard(order, idx){
 function render(){
   document.getElementById("totalProducts").innerText=products.length;
   document.getElementById("count-urunler").innerText=products.length;
+  document.getElementById("count-kategoriList").innerText=categories.length;
   document.getElementById("totalMoney").innerText=calcMoney()+"₺";
 
   const key=document.getElementById("searchOrder").value.toLowerCase();
-  const bySearch=list=>list.filter(o=>(o.customer?.isim||"").toLowerCase().includes(key)||(o.customer?.telefon||"").toLowerCase().includes(key));
 
-  // Ürünler
+  let catHtml = "";
+  categories.forEach(c => {
+    catHtml += `<div class="catManagerGrid">
+      <span>📁 ${c.name}</span>
+      <button class="catMiniDel" onclick="deleteCategory('${c.id}')">🗑 Sil</button>
+    </div>`;
+  });
+  document.getElementById("adminCategoryList").innerHTML = catHtml || "<p style='color:#666;font-size:12px;'>Kategori bulunamadı.</p>";
+
   let p="";
   products.forEach((x,i)=>{
     const isAktif=x.aktif!==false;
-    const src=x.resim||"https://via.placeholder.com/150";
+    const src=x.resim||DEFAULT_IMG;
     p+=`<div class="card" style="padding:8px;">
-      <img class="productImage ${isAktif?'':'pasif-img'}" src="${src}" onclick="openZoom('${src.replace(/'/g,"\\'")}')">
+      <img class="productImage ${isAktif?'':'pasif-img'}" src="${src}" onerror="this.src='${DEFAULT_IMG}'" onclick="openZoom('${src.replace(/'/g,"\\'")}')">
       <div style="margin-top:5px;font-weight:bold;font-size:12px;">${x.ad}</div>
+      <div style="color:#aaa;font-size:11px;margin-bottom:2px;">📁 ${x.category||'Kategorisiz'}</div>
       <div style="color:#00d084;font-weight:bold;">${x.fiyat}₺</div>
       <button class="${isAktif?'primary':'passiveBtn'}" onclick="toggleProductStatus(${i})">${isAktif?'🟢 Aktif':'🔴 Pasif'}</button>
       <button class="deleteBtn" onclick="deleteProduct(${i})">🗑 Sil</button>
@@ -379,7 +500,6 @@ function render(){
   });
   document.getElementById("products").innerHTML=p;
 
-  // Siparişler - index'i allOrders'daki gerçek index ile eşleştir
   const yeniList=allOrders.map((o,i)=>({o,i})).filter(({o})=>(o.status||"yeni")==="yeni");
   const odemeList=allOrders.map((o,i)=>({o,i})).filter(({o})=>o.status==="odeme");
   const kargoList=allOrders.map((o,i)=>({o,i})).filter(({o})=>o.status==="kargo");
