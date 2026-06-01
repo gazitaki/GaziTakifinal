@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Gazi Takı</title>
+<link rel="dns-prefetch" href="//i.ibb.co">
+<link rel="dns-prefetch" href="//wsrv.nl">
+<link rel="dns-prefetch" href="//firestore.googleapis.com">
+<link rel="dns-prefetch" href="//www.gstatic.com">
+<link rel="preconnect" href="https://i.ibb.co">
+<link rel="preconnect" href="https://wsrv.nl">
+<link rel="preconnect" href="https://firestore.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 
@@ -440,12 +447,7 @@ body{
 </div>
 
 <div class="cats" id="catsRow">
-  <div class="cat active" onclick="filterCat('Küpe',this)">Küpe</div>
-  <div class="cat" onclick="filterCat('Kolye',this)">Kolye</div>
-  <div class="cat" onclick="filterCat('Bileklik',this)">Bileklik</div>
-  <div class="cat" onclick="filterCat('Xuping',this)">Xuping</div>
-  <div class="cat" onclick="filterCat('CM',this)">CM</div>
-  <div class="cat" onclick="filterCat('VIP',this)">VIP</div>
+  <div style="padding:7px 16px;color:var(--gray);font-size:13px;">Yükleniyor...</div>
 </div>
 <div style="display:flex;justify-content:flex-end;padding:6px 16px;background:var(--bg2);border-bottom:1px solid var(--border);position:relative;">
   <div id="sortBtn" onclick="toggleSort(event)" style="padding:5px 12px;border-radius:20px;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--white);cursor:pointer;background:var(--bg);display:flex;align-items:center;gap:4px;">↕ Sırala</div>
@@ -457,6 +459,7 @@ body{
 </div>
 
 <div class="grid" id="grid"></div>
+<div id="emptyMsg" style="text-align:center;padding:40px;color:var(--gray);display:none;width:100%;">Bu kategoride ürün yok</div>
 
 <div class="cartBar empty" id="cartBar" onclick="openCart()">
   <div class="cartBarLeft" id="cartBarLeft">
@@ -523,26 +526,53 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let products  = [];
-let activeCat = "Küpe";
+let activeCat = "";
 let activeSort = "az";
 let cart      = {};
 let sending   = false;
 
-function img(url){
+function img(url, type){
+  type = type || "vitrin";
   if(!url||url.trim()==="") return "https://via.placeholder.com/300";
   if(url.includes("drive.google.com")){
     let m=url.match(/[-\w]{25,}/);
-    if(m&&m[0]) return "https://drive.google.com/thumbnail?id="+m[0]+"&sz=w800";
+    let size = type === "vitrin" ? "w400" : "w1000";
+    if(m&&m[0]) return "https://drive.google.com/thumbnail?id="+m[0]+"&sz="+size;
   }
-  if(url.startsWith("http://")||url.startsWith("https://")) return url;
+  if(url.startsWith("http://")||url.startsWith("https://")){
+    if(type === "vitrin"){
+      let cleanUrl = url.replace(/^https?:\/\//, '');
+      return "https://wsrv.nl/?url=" + cleanUrl + "&w=400&output=webp";
+    }
+    return url;
+  }
   return "https://via.placeholder.com/300";
+}
+
+let categories = [];
+
+function renderCats(){
+  const catsRow = document.getElementById("catsRow");
+  if(!categories.length){ catsRow.innerHTML='<div style="padding:7px 16px;color:var(--gray);font-size:13px;">Kategori yok</div>'; return; }
+  catsRow.innerHTML = categories.map((c,i) =>
+    '<div class="cat '+(i===0?'active':'')+'" onclick="filterCat(\''+c.name+'\',this)">'+c.name+'</div>'
+  ).join("");
+  if(categories.length > 0){
+    activeCat = categories[0].name;
+    renderGrid();
+  }
 }
 
 async function loadData(){
   try{
+    // Kategorileri çek
+    const catSnap = await db.collection("categories").orderBy("name","asc").get();
+    categories = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderCats();
+
+    // Ürünleri çek
     const snapshot = await db.collection("products").get();
     products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    // Sadece aktif ürünleri göster
     products = products.filter(p => p.aktif !== false);
     renderGrid();
   }catch(e){ console.error("Veri yüklenemedi:", e); }
@@ -556,7 +586,12 @@ function filterCat(cat,el){
   activeCat=cat;
   document.querySelectorAll(".cat").forEach(c=>c.classList.remove("active"));
   el.classList.add("active");
-  renderGrid();
+  let count=0;
+  document.querySelectorAll(".productCard").forEach(card=>{
+    if(card.getAttribute("data-category")===activeCat){ card.style.display="block"; count++; }
+    else card.style.display="none";
+  });
+  document.getElementById("emptyMsg").style.display = count===0 ? "block" : "none";
 }
 
 function toggleSort(e){
@@ -576,80 +611,93 @@ function setSort(type,el){
 document.addEventListener("click",function(){ document.getElementById("sortPanel").style.display="none"; });
 
 function renderGrid(){
-  let filtered=products.filter(p=>activeCat==="all"||p.category===activeCat);
+  let filtered=products.slice();
   if(activeSort==="az") filtered.sort((a,b)=>a.ad.localeCompare(b.ad,"tr"));
   else if(activeSort==="asc") filtered.sort((a,b)=>a.fiyat-b.fiyat);
   else if(activeSort==="desc") filtered.sort((a,b)=>b.fiyat-a.fiyat);
-  if(!filtered.length){
-    document.getElementById("grid").innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray)">Bu kategoride ürün yok</div>`;
-    return;
-  }
+
+  let activeCount=0;
+  const placeholder="https://via.placeholder.com/300?text=Gazi+Taki";
+
   document.getElementById("grid").innerHTML=filtered.map(p=>{
+    const isMatch=p.category===activeCat;
+    if(isMatch) activeCount++;
+    const displayStyle=isMatch?"block":"none";
     const id=p.id||p.ad;
     const renk1=p.renk1||"";
     const renk2=p.renk2||"";
-
     var varyantHTML="";
+
     if(renk1||renk2){
-      // Renkli varyant modu
       if(renk1){
         const vid=id+"__"+renk1;
         const vqty=cart[vid]?cart[vid].qty:0;
-        varyantHTML+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">
-          <span style="font-size:11px;font-weight:600;color:var(--gray);">${renk1}</span>
-          <div class="qtyControl">
-            <div class="qBtn ${vqty>0?'active':''}" onclick="minus('${vid}')">−</div>
-            <input type="number" min="0" id="qnum-${vid}" value="${vqty}" class="qNum" style="width:36px;border:none;background:transparent;font-family:'DM Sans',sans-serif;" onchange="setQty('${vid}','${p.ad} - ${renk1}',${p.fiyat},'${p.resim||""}','${p.category}',this.value)">
-            <div class="qBtn active" onclick="plus('${vid}','${p.ad} - ${renk1}',${p.fiyat},'${p.resim||""}','${p.category}')">+</div>
-          </div>
-        </div>`;
+        varyantHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">'
+          +'<span style="font-size:11px;font-weight:600;color:var(--gray);">'+renk1+'</span>'
+          +'<div class="qtyControl">'
+          +'<div class="qBtn '+(vqty>0?'active':'')+'" onclick="minus(\''+vid+'\')">−</div>'
+          +'<input type="number" min="0" id="qnum-'+vid+'" value="'+vqty+'" class="qNum" style="width:36px;border:none;background:transparent;font-family:\'DM Sans\',sans-serif;" onchange="setQty(\''+vid+'\',\''+p.ad+' - '+renk1+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
+          +'<div class="qBtn active" onclick="plus(\''+vid+'\',\''+p.ad+' - '+renk1+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\')">+</div>'
+          +'</div></div>';
       }
       if(renk2){
         const vid=id+"__"+renk2;
         const vqty=cart[vid]?cart[vid].qty:0;
-        varyantHTML+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">
-          <span style="font-size:11px;font-weight:600;color:var(--gray);">${renk2}</span>
-          <div class="qtyControl">
-            <div class="qBtn ${vqty>0?'active':''}" onclick="minus('${vid}')">−</div>
-            <input type="number" min="0" id="qnum-${vid}" value="${vqty}" class="qNum" style="width:36px;border:none;background:transparent;font-family:'DM Sans',sans-serif;" onchange="setQty('${vid}','${p.ad} - ${renk2}',${p.fiyat},'${p.resim||""}','${p.category}',this.value)">
-            <div class="qBtn active" onclick="plus('${vid}','${p.ad} - ${renk2}',${p.fiyat},'${p.resim||""}','${p.category}')">+</div>
-          </div>
-        </div>`;
+        varyantHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">'
+          +'<span style="font-size:11px;font-weight:600;color:var(--gray);">'+renk2+'</span>'
+          +'<div class="qtyControl">'
+          +'<div class="qBtn '+(vqty>0?'active':'')+'" onclick="minus(\''+vid+'\')">−</div>'
+          +'<input type="number" min="0" id="qnum-'+vid+'" value="'+vqty+'" class="qNum" style="width:36px;border:none;background:transparent;font-family:\'DM Sans\',sans-serif;" onchange="setQty(\''+vid+'\',\''+p.ad+' - '+renk2+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
+          +'<div class="qBtn active" onclick="plus(\''+vid+'\',\''+p.ad+' - '+renk2+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\')">+</div>'
+          +'</div></div>';
       }
+      return '<div class="productCard" data-category="'+p.category+'" style="display:'+displayStyle+'">'
+        +'<img class="productImg" src="'+img(p.resim,'vitrin')+'" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\''+placeholder+'\';" onclick="openZoom(\''+img(p.resim,'zoom')+'\')">'
+        +'<div class="productInfo">'
+        +'<div class="productName">'+p.ad+'</div>'
+        +'<div class="productCat">'+p.category+'</div>'
+        +'<div class="productPrice">'+p.fiyat+'₺</div>'
+        +varyantHTML+'</div></div>';
     } else {
-      // Normal tek renk modu
       const qty=cart[id]?cart[id].qty:0;
-      varyantHTML=`<div class="productBottom">
-          <div class="productPrice">${p.fiyat}₺</div>
-          <div class="qtyControl">
-            <div class="qBtn ${qty>0?'active':''}" onclick="minus('${id}')">−</div>
-            <input type="number" min="0" id="qnum-${id}" value="${qty}" class="qNum" style="width:36px;border:none;background:transparent;font-family:'DM Sans',sans-serif;" onchange="setQty('${id}','${p.ad}',${p.fiyat},'${p.resim||""}','${p.category}',this.value)">
-            <div class="qBtn active" onclick="plus('${id}','${p.ad}',${p.fiyat},'${p.resim||""}','${p.category}')">+</div>
-          </div>
-        </div>`;
+      return '<div class="productCard" data-category="'+p.category+'" style="display:'+displayStyle+'">'
+              +'<img class="productImg" src="'+img(p.resim,'vitrin')+'" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\''+placeholder+'\';" onclick="openZoom(\''+img(p.resim,'zoom')+'\')">'
+        +'<div class="productInfo">'
+        +'<div class="productName">'+p.ad+'</div>'
+        +'<div class="productCat">'+p.category+'</div>'
+        +'<div class="productBottom">'
+        +'<div class="productPrice">'+p.fiyat+'₺</div>'
+        +'<div class="qtyControl">'
+        +'<div class="qBtn '+(qty>0?'active':'')+'" onclick="minus(\''+id+'\')">−</div>'
+        +'<input type="number" min="0" id="qnum-'+id+'" value="'+qty+'" class="qNum" style="width:36px;border:none;background:transparent;font-family:\'DM Sans\',sans-serif;" onchange="setQty(\''+id+'\',\''+p.ad+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
+        +'<div class="qBtn active" onclick="plus(\''+id+'\',\''+p.ad+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\')">+</div>'
+        +'</div></div></div></div>';
     }
-
-    return `<div class="productCard">
-      <img class="productImg" src="${img(p.resim)}" onclick="openZoom('${img(p.resim)}')">
-      <div class="productInfo">
-        <div class="productName">${p.ad}</div>
-        <div class="productCat">${p.category}</div>
-        ${renk1||renk2 ? `<div class="productPrice">${p.fiyat}₺</div>` : ""}
-        ${varyantHTML}
-      </div>
-    </div>`;
   }).join("");
+
+  document.getElementById("emptyMsg").style.display = activeCount===0 ? "block" : "none";
 }
 
 function saveCart(){ try{ localStorage.setItem("gaziCart", JSON.stringify(cart)); }catch(e){} }
 function loadCart(){ try{ var s=localStorage.getItem("gaziCart"); if(s) cart=JSON.parse(s); }catch(e){} }
+
+function updateQtyUI(id){
+  let inputEl=document.getElementById("qnum-"+id);
+  if(inputEl){
+    let qty=cart[id]?cart[id].qty:0;
+    inputEl.value=qty;
+    let minusBtn=inputEl.previousElementSibling;
+    if(qty>0) minusBtn.classList.add("active");
+    else minusBtn.classList.remove("active");
+  }
+}
 
 function plus(id,ad,fiyat,resim,category){
   if(!cart[id]) cart[id]={id,ad,fiyat,resim,category,qty:0};
   cart[id].qty++;
   saveCart();
   updateCartUI();
-  renderGrid();
+  updateQtyUI(id);
 }
 
 function minus(id){
@@ -658,7 +706,7 @@ function minus(id){
   if(cart[id].qty<=0) delete cart[id];
   saveCart();
   updateCartUI();
-  renderGrid();
+  updateQtyUI(id);
 }
 
 function setQty(id,ad,fiyat,resim,category,val){
@@ -670,7 +718,7 @@ function setQty(id,ad,fiyat,resim,category,val){
   }
   saveCart();
   updateCartUI();
-  renderGrid();
+  updateQtyUI(id);
 }
 
 function removeItem(id){
@@ -752,10 +800,12 @@ async function sendOrder(){
   });
   if(!valid){ alert("Lütfen tüm alanları doldurun!"); return; }
 
-  const telClean=telefon.replace(/\D/g,"");
-  if(telClean.length<10){
+  let telClean=telefon.replace(/\D/g,"");
+  if(telClean.startsWith("90")) telClean=telClean.substring(2);
+  if(!telClean.startsWith("0")&&telClean.length===10) telClean="0"+telClean;
+  if(telClean.length!==11){
     document.getElementById("telefon").classList.add("error");
-    alert("Geçerli bir telefon numarası girin!");
+    alert("Geçerli bir telefon numarası girin (Örn: 05xx xxx xx xx)!");
     return;
   }
 
@@ -814,6 +864,7 @@ async function sendOrder(){
 
 function closeThank(){
   document.getElementById("thankModal").classList.remove("show");
+  window.location.reload();
 }
 
 let zScale=1, zStartDist=0, zLastScale=1;
