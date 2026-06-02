@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Gazi Takı</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#b8860b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Gazi Takı">
+<link rel="apple-touch-icon" href="https://i.ibb.co/chKqs2Qz/file-000000005a7c72438ba1cefaa8903576.png">
 <link rel="dns-prefetch" href="//i.ibb.co">
 <link rel="dns-prefetch" href="//wsrv.nl">
 <link rel="dns-prefetch" href="//firestore.googleapis.com">
@@ -664,7 +670,7 @@ function renderGrid(){
     } else {
       const qty=cart[id]?cart[id].qty:0;
       return '<div class="productCard" data-category="'+p.category+'" style="display:'+displayStyle+'">'
-       +'<img class="productImg" src="'+img(p.resim,'vitrin')+'" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\''+placeholder+'\';" onclick="openZoom(\''+img(p.resim,'zoom')+'\')">'
+        +'<img class="productImg" src="'+img(p.resim,'vitrin')+'" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\''+placeholder+'\';" onclick="openZoom(\''+img(p.resim,'zoom')+'\')">'
         +'<div class="productInfo">'
         +'<div class="productName">'+p.ad+'</div>'
         +'<div class="productCat">'+p.category+'</div>'
@@ -908,9 +914,13 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 
 loadCart();
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(function(e){ console.log('SW hatası:', e); });
+}
 loadData();
 setInterval(loadData, 30000);
 
 </script>
 </body>
-</html> 
+</html>
