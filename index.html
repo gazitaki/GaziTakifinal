@@ -565,12 +565,15 @@ function renderCats(){
 
 async function loadData(){
   try{
-    // Kategorileri çek
-    const catSnap = await db.collection("categories").orderBy("name","asc").get();
-    categories = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderCats();
+    const catSnap = await db.collection("categories").orderBy("createdAt","asc").get();
+    const newCats = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if(categories.length === 0){
+      categories = newCats;
+      renderCats();
+    } else {
+      categories = newCats;
+    }
 
-    // Ürünleri çek
     const snapshot = await db.collection("products").get();
     products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     products = products.filter(p => p.aktif !== false);
@@ -661,7 +664,7 @@ function renderGrid(){
     } else {
       const qty=cart[id]?cart[id].qty:0;
       return '<div class="productCard" data-category="'+p.category+'" style="display:'+displayStyle+'">'
-              +'<img class="productImg" src="'+img(p.resim,'vitrin')+'" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\''+placeholder+'\';" onclick="openZoom(\''+img(p.resim,'zoom')+'\')">'
+       +'<img class="productImg" src="'+img(p.resim,'vitrin')+'" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\''+placeholder+'\';" onclick="openZoom(\''+img(p.resim,'zoom')+'\')">'
         +'<div class="productInfo">'
         +'<div class="productName">'+p.ad+'</div>'
         +'<div class="productCat">'+p.category+'</div>'
@@ -910,4 +913,4 @@ setInterval(loadData, 30000);
 
 </script>
 </body>
-</html>
+</html> 
