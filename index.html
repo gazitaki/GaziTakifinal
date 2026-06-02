@@ -635,30 +635,46 @@ function renderGrid(){
     const id=p.id||p.ad;
     const renk1=p.renk1||"";
     const renk2=p.renk2||"";
+    const t1=p.renk1_tukendi===true;
+    const t2=p.renk2_tukendi===true;
     var varyantHTML="";
 
     if(renk1||renk2){
       if(renk1){
         const vid=id+"__"+renk1;
         const vqty=cart[vid]?cart[vid].qty:0;
-        varyantHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">'
-          +'<span style="font-size:11px;font-weight:600;color:var(--gray);">'+renk1+'</span>'
-          +'<div class="qtyControl">'
-          +'<div class="qBtn '+(vqty>0?'active':'')+'" onclick="minus(\''+vid+'\')">−</div>'
-          +'<input type="number" min="0" id="qnum-'+vid+'" value="'+vqty+'" class="qNum" style="width:36px;border:none;background:transparent;font-family:\'DM Sans\',sans-serif;" onchange="setQty(\''+vid+'\',\''+p.ad+' - '+renk1+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
-          +'<div class="qBtn active" onclick="plus(\''+vid+'\',\''+p.ad+' - '+renk1+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\')">+</div>'
-          +'</div></div>';
+        if(t1){
+          varyantHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">'
+            +'<span style="font-size:11px;font-weight:600;color:#bbb;text-decoration:line-through;">'+renk1+'</span>'
+            +'<span style="font-size:10px;font-weight:700;color:white;background:#c0392b;padding:3px 8px;border-radius:20px;">Tükendi</span>'
+            +'</div>';
+        } else {
+          varyantHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">'
+            +'<span style="font-size:11px;font-weight:600;color:var(--gray);">'+renk1+'</span>'
+            +'<div class="qtyControl">'
+            +'<div class="qBtn '+(vqty>0?'active':'')+'" onclick="minus(\''+vid+'\')">−</div>'
+            +'<input type="number" min="0" id="qnum-'+vid+'" value="'+vqty+'" class="qNum" style="width:36px;border:none;background:transparent;font-family:\'DM Sans\',sans-serif;" onchange="setQty(\''+vid+'\',\''+p.ad+' - '+renk1+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
+            +'<div class="qBtn active" onclick="plus(\''+vid+'\',\''+p.ad+' - '+renk1+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\')">+</div>'
+            +'</div></div>';
+        }
       }
       if(renk2){
         const vid=id+"__"+renk2;
         const vqty=cart[vid]?cart[vid].qty:0;
-        varyantHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">'
-          +'<span style="font-size:11px;font-weight:600;color:var(--gray);">'+renk2+'</span>'
-          +'<div class="qtyControl">'
-          +'<div class="qBtn '+(vqty>0?'active':'')+'" onclick="minus(\''+vid+'\')">−</div>'
-          +'<input type="number" min="0" id="qnum-'+vid+'" value="'+vqty+'" class="qNum" style="width:36px;border:none;background:transparent;font-family:\'DM Sans\',sans-serif;" onchange="setQty(\''+vid+'\',\''+p.ad+' - '+renk2+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
-          +'<div class="qBtn active" onclick="plus(\''+vid+'\',\''+p.ad+' - '+renk2+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\')">+</div>'
-          +'</div></div>';
+        if(t2){
+          varyantHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">'
+            +'<span style="font-size:11px;font-weight:600;color:#bbb;text-decoration:line-through;">'+renk2+'</span>'
+            +'<span style="font-size:10px;font-weight:700;color:white;background:#c0392b;padding:3px 8px;border-radius:20px;">Tükendi</span>'
+            +'</div>';
+        } else {
+          varyantHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">'
+            +'<span style="font-size:11px;font-weight:600;color:var(--gray);">'+renk2+'</span>'
+            +'<div class="qtyControl">'
+            +'<div class="qBtn '+(vqty>0?'active':'')+'" onclick="minus(\''+vid+'\')">−</div>'
+            +'<input type="number" min="0" id="qnum-'+vid+'" value="'+vqty+'" class="qNum" style="width:36px;border:none;background:transparent;font-family:\'DM Sans\',sans-serif;" onchange="setQty(\''+vid+'\',\''+p.ad+' - '+renk2+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
+            +'<div class="qBtn active" onclick="plus(\''+vid+'\',\''+p.ad+' - '+renk2+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\')">+</div>'
+            +'</div></div>';
+        }
       }
       return '<div class="productCard" data-category="'+p.category+'" style="display:'+displayStyle+'">'
         +'<img class="productImg" src="'+img(p.resim,'vitrin')+'" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\''+placeholder+'\';" onclick="openZoom(\''+img(p.resim,'zoom')+'\')">'
