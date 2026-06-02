@@ -1,0 +1,22 @@
+{
+  "name": "Gazi Takı",
+  "short_name": "Gazi Takı",
+  "description": "Gazi Takı Toptan Aksesuar",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#b8860b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://i.ibb.co/chKqs2Qz/file-000000005a7c72438ba1cefaa8903576.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.ibb.co/chKqs2Qz/file-000000005a7c72438ba1cefaa8903576.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
