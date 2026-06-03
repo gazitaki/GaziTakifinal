@@ -149,6 +149,8 @@ body{
   cursor:pointer;
 }
 
+.productOverlay{ display:none; }
+
 .productInfo{ padding:10px; }
 .productName{
   font-size:13px;
@@ -159,7 +161,7 @@ body{
   overflow:hidden;
   text-overflow:ellipsis;
 }
-.productCat{ font-size:11px; color:var(--gray); margin-bottom:8px; }
+.productCat{ font-size:11px; color:var(--gray); margin-bottom:8px; display:block; }
 .productBottom{
   display:flex;
   align-items:center;
@@ -184,14 +186,14 @@ body{
   align-items:center;
   justify-content:center;
   cursor:pointer;
-  transition:all .15s;
   font-weight:700;
   font-family:'DM Sans',sans-serif;
   flex-shrink:0;
 }
 .qBtn:hover{ border-color:var(--gold); color:var(--gold); }
 .qBtn.active{ background:var(--gold); border-color:var(--gold); color:#fff; }
-.qNum{ font-size:14px; font-weight:600; min-width:16px; text-align:center; }
+.qNum{ font-size:14px; font-weight:600; min-width:16px; width:28px; text-align:center; border:none; background:transparent; color:var(--white); font-family:'DM Sans',sans-serif; }
+.qNum:focus{ outline:1px solid var(--gold); border-radius:4px; }
 
 .overlay{
   display:none;
@@ -440,9 +442,67 @@ body{
   100%{ transform:scale(1); }
 }
 
+.installBanner{
+  background:linear-gradient(135deg,#1a1a1a,#333);
+  padding:10px 16px;
+  display:flex; align-items:center; gap:10px;
+}
+.installBannerIcon{ width:34px; height:34px; border-radius:8px; overflow:hidden; flex-shrink:0; }
+.installBannerIcon img{ width:100%; height:100%; object-fit:cover; }
+.installBannerText{ flex:1; font-size:11px; color:#ccc; }
+.installBannerText b{ display:block; font-size:12px; color:white; }
+.installBannerBtn{ background:var(--gold); color:white; border:none; border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; cursor:pointer; flex-shrink:0; font-family:'DM Sans',sans-serif; }
+.installBannerClose{ background:transparent; border:none; color:#666; font-size:18px; cursor:pointer; flex-shrink:0; line-height:1; }
+
+.installPopup{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:400; justify-content:flex-end; align-items:flex-end; }
+.installPopup.show{ display:flex; }
+.installPanel{ background:white; width:100%; border-radius:20px 20px 0 0; padding:20px; }
+.installHandle{ width:40px; height:4px; background:#ddd; border-radius:2px; margin:0 auto 16px; }
+.installTitle{ font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:700; color:var(--gold); margin-bottom:4px; }
+.installSub{ font-size:13px; color:#888; margin-bottom:16px; }
+.installSection{ background:#f5f5f5; border-radius:12px; padding:12px; margin-bottom:12px; }
+.installSectionTitle{ font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+.installStep{ display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; }
+.installStep:last-child{ margin-bottom:0; }
+.installStepNum{ width:24px; height:24px; border-radius:50%; background:var(--gold); color:white; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.installStepText{ font-size:13px; color:#333; line-height:1.5; }
+.installStepText b{ color:#111; }
+.installCloseBtn{ width:100%; padding:14px; background:#1a1a1a; color:white; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+
 </style>
 </head>
 <body>
+
+<div class="installBanner" id="installBanner">
+  <div class="installBannerIcon">
+    <img src="https://i.ibb.co/chKqs2Qz/file-000000005a7c72438ba1cefaa8903576.png">
+  </div>
+  <div class="installBannerText">
+    <b>Gazi Takı</b>
+    Ana ekrana ekle, uygulama gibi kullan!
+  </div>
+  <button class="installBannerBtn" onclick="showInstallSteps()">Yükle</button>
+  <button class="installBannerClose" onclick="closeInstallBanner()">×</button>
+</div>
+
+<div class="installPopup" id="installPopup" onclick="closeInstallPopup()">
+  <div class="installPanel" onclick="event.stopPropagation()">
+    <div class="installHandle"></div>
+    <div class="installTitle">Uygulamayı Yükle</div>
+    <div class="installSub">Telefonuna ekle, her zaman hızlıca aç!</div>
+    <div class="installSection">
+      <div class="installSectionTitle">📱 Android — Chrome</div>
+      <div class="installStep"><div class="installStepNum">1</div><div class="installStepText">Sağ üstteki <b>⋮ menüye</b> tıkla</div></div>
+      <div class="installStep"><div class="installStepNum">2</div><div class="installStepText"><b>"Ana ekrana ekle"</b> seçeneğine bas</div></div>
+    </div>
+    <div class="installSection">
+      <div class="installSectionTitle">🍎 iPhone — Safari</div>
+      <div class="installStep"><div class="installStepNum">1</div><div class="installStepText">Alt ortadaki <b>paylaş ikonuna</b> bas (□↑)</div></div>
+      <div class="installStep"><div class="installStepNum">2</div><div class="installStepText"><b>"Ana Ekrana Ekle"</b> seçeneğine bas</div></div>
+    </div>
+    <button class="installCloseBtn" onclick="closeInstallPopup()">Anladım ✓</button>
+  </div>
+</div>
 
 <div class="header">
   <div class="logo">GAZİ <span>TAKI</span></div>
@@ -455,9 +515,14 @@ body{
 <div class="cats" id="catsRow">
   <div style="padding:7px 16px;color:var(--gray);font-size:13px;">Yükleniyor...</div>
 </div>
-<div style="display:flex;justify-content:flex-end;padding:6px 16px;background:var(--bg2);border-bottom:1px solid var(--border);position:relative;">
-  <div id="sortBtn" onclick="toggleSort(event)" style="padding:5px 12px;border-radius:20px;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--white);cursor:pointer;background:var(--bg);display:flex;align-items:center;gap:4px;">↕ Sırala</div>
-  <div id="sortPanel" style="display:none;position:absolute;top:36px;right:16px;background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;z-index:200;min-width:160px;box-shadow:0 4px 16px rgba(0,0,0,.1);">
+<div style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg2);border-bottom:1px solid var(--border);position:relative;">
+  <div style="flex:1;display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:6px 12px;">
+    <span style="color:var(--gray);font-size:14px;">🔍</span>
+    <input id="searchInput" type="text" placeholder="Ürün ara..." oninput="searchProducts()" style="flex:1;border:none;background:transparent;font-size:13px;color:var(--white);font-family:'DM Sans',sans-serif;outline:none;">
+    <button id="searchClear" onclick="clearSearch()" style="display:none;background:none;border:none;color:var(--gray);font-size:16px;cursor:pointer;line-height:1;">×</button>
+  </div>
+  <div id="sortBtn" onclick="toggleSort(event)" style="padding:5px 12px;border-radius:20px;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--white);cursor:pointer;background:var(--bg);display:flex;align-items:center;gap:4px;flex-shrink:0;">↕ Sırala</div>
+  <div id="sortPanel" style="display:none;position:absolute;top:46px;right:16px;background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;z-index:200;min-width:160px;box-shadow:0 4px 16px rgba(0,0,0,.1);">
     <div class="sortOption active" onclick="setSort('az',this)" style="padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:1px solid var(--border);color:var(--gold);">🔤 A-Z</div>
     <div class="sortOption" onclick="setSort('asc',this)" style="padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:1px solid var(--border);">⬆️ Fiyat Artan</div>
     <div class="sortOption" onclick="setSort('desc',this)" style="padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;">⬇️ Fiyat Azalan</div>
@@ -653,7 +718,7 @@ function renderGrid(){
             +'<span style="font-size:11px;font-weight:600;color:var(--gray);">'+renk1+'</span>'
             +'<div class="qtyControl">'
             +'<div class="qBtn '+(vqty>0?'active':'')+'" onclick="minus(\''+vid+'\')">−</div>'
-            +'<input type="number" min="0" id="qnum-'+vid+'" value="'+vqty+'" class="qNum" style="width:36px;border:none;background:transparent;font-family:\'DM Sans\',sans-serif;" onchange="setQty(\''+vid+'\',\''+p.ad+' - '+renk1+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
+            +'<input type="number" min="0" id="qnum-'+vid+'" value="'+vqty+'" class="qNum" onchange="setQty(\''+vid+'\',\''+p.ad+' - '+renk1+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
             +'<div class="qBtn active" onclick="plus(\''+vid+'\',\''+p.ad+' - '+renk1+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\')">+</div>'
             +'</div></div>';
         }
@@ -671,7 +736,7 @@ function renderGrid(){
             +'<span style="font-size:11px;font-weight:600;color:var(--gray);">'+renk2+'</span>'
             +'<div class="qtyControl">'
             +'<div class="qBtn '+(vqty>0?'active':'')+'" onclick="minus(\''+vid+'\')">−</div>'
-            +'<input type="number" min="0" id="qnum-'+vid+'" value="'+vqty+'" class="qNum" style="width:36px;border:none;background:transparent;font-family:\'DM Sans\',sans-serif;" onchange="setQty(\''+vid+'\',\''+p.ad+' - '+renk2+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
+            +'<input type="number" min="0" id="qnum-'+vid+'" value="'+vqty+'" class="qNum" onchange="setQty(\''+vid+'\',\''+p.ad+' - '+renk2+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
             +'<div class="qBtn active" onclick="plus(\''+vid+'\',\''+p.ad+' - '+renk2+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\')">+</div>'
             +'</div></div>';
         }
@@ -694,7 +759,7 @@ function renderGrid(){
         +'<div class="productPrice">'+p.fiyat+'₺</div>'
         +'<div class="qtyControl">'
         +'<div class="qBtn '+(qty>0?'active':'')+'" onclick="minus(\''+id+'\')">−</div>'
-        +'<input type="number" min="0" id="qnum-'+id+'" value="'+qty+'" class="qNum" style="width:36px;border:none;background:transparent;font-family:\'DM Sans\',sans-serif;" onchange="setQty(\''+id+'\',\''+p.ad+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
+        +'<input type="number" min="0" id="qnum-'+id+'" value="'+qty+'" class="qNum" onchange="setQty(\''+id+'\',\''+p.ad+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\',this.value)">'
         +'<div class="qBtn active" onclick="plus(\''+id+'\',\''+p.ad+'\','+p.fiyat+',\''+(p.resim||'')+'\',\''+p.category+'\')">+</div>'
         +'</div></div></div></div>';
     }
@@ -928,6 +993,51 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
   });
 });
+
+function searchProducts(){
+  var q = document.getElementById("searchInput").value.trim().toLowerCase();
+  var clearBtn = document.getElementById("searchClear");
+  clearBtn.style.display = q.length > 0 ? "block" : "none";
+
+  if(q.length === 0){
+    // Arama boşsa normal kategori filtresi
+    document.querySelectorAll(".productCard").forEach(function(card){
+      card.style.display = card.getAttribute("data-category") === activeCat ? "block" : "none";
+    });
+    document.getElementById("emptyMsg").style.display = "none";
+    return;
+  }
+
+  // Tüm kategorilerde ara
+  var count = 0;
+  document.querySelectorAll(".productCard").forEach(function(card){
+    var name = card.querySelector(".productName");
+    if(name && name.innerText.toLowerCase().includes(q)){
+      card.style.display = "block";
+      count++;
+    } else {
+      card.style.display = "none";
+    }
+  });
+  document.getElementById("emptyMsg").style.display = count === 0 ? "block" : "none";
+}
+
+function clearSearch(){
+  document.getElementById("searchInput").value = "";
+  document.getElementById("searchClear").style.display = "none";
+  filterCat(activeCat, document.querySelector(".cat.active"));
+}
+
+function showInstallSteps(){ document.getElementById("installPopup").classList.add("show"); }
+function closeInstallPopup(){ document.getElementById("installPopup").classList.remove("show"); }
+function closeInstallBanner(){
+  document.getElementById("installBanner").style.display="none";
+  localStorage.setItem("gaziInstallBannerClosed","1");
+}
+
+if(localStorage.getItem("gaziInstallBannerClosed")==="1"){
+  document.getElementById("installBanner").style.display="none";
+}
 
 loadCart();
 
